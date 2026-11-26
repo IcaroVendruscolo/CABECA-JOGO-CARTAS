@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CABEÇÃO — Sorteador de Cartas &amp; Gabarito</title>
+  <link rel="icon" type="image/png" href="/assets/aistudio/LOGO_ICON_758fc1db.png" />
+  <!-- Google Fonts: Bubblegum Sans & Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Bubblegum Sans"', 'cursive', 'sans-serif'],
+            sans: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            cabecao: {
+              navy: '#16224A',
+              navyDark: '#0E1633',
+              purple: '#723977',
+              pink: '#E5616D',
+              perguntas: '#723977',
+              redacao: '#E5616D',
+              universidade: '#ADDBDA',
+              troca: '#66403B',
+              movimento: '#3D3F7B',
+              matematica: '#E34D64',
+              natureza: '#A5D39E',
+              linguagens: '#008CC3',
+              humanas: '#F3AE7A',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #F1F5F9;
+      color: #0F172A;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.04); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb { background: rgba(22, 34, 74, 0.25); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(22, 34, 74, 0.45); }
+
+    @keyframes modalPop {
+      0% { opacity: 0; transform: scale(0.95) translateY(8px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-animate {
+      animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes winnerBounce {
+      0% { transform: scale(0.96); }
+      50% { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+    .winner-pop {
+      animation: winnerBounce 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ==================== CABEÇALHO DESKTOP / TABLET ==================== -->
+  <header class="hidden md:block bg-cabecao-navy text-white shadow-lg border-b border-white/10 sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Identidade Visual CABEÇÃO -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-11 h-11 rounded-xl bg-white p-1 flex items-center justify-center shadow-md shrink-0">
+          <img src="/assets/aistudio/LOGO_ICON_758fc1db.png" alt="Símbolo CABEÇÃO" referrerpolicy="no-referrer" class="w-full h-full object-contain" />
+        </div>
+        <div class="h-[44px] overflow-hidden flex items-center shrink-0">
+          <h1 class="sr-only">CABEÇÃO</h1>
+          <img src="/assets/aistudio/LOGO_HORIZONTAL_CABECAO_BRANCA_8ea4bcf1.png" alt="CABEÇÃO" referrerpolicy="no-referrer" class="h-[70px] w-auto max-w-none object-contain translate-y-[2px]" />
+        </div>
+      </div>
+
+      <!-- Ações Rápidas -->
+      <div class="flex items-center gap-2">
+        <button onclick="openSearchModal()" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold flex items-center gap-1.5 transition">
+          <svg class="w-4 h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Livro de Gabaritos</span>
+        </button>
+
+        <button onclick="openModal('modalConfirmReset')" class="px-3 py-2 rounded-xl bg-cabecao-pink hover:bg-pink-600 text-white text-xs font-extrabold flex items-center gap-1.5 shadow transition" title="Devolver todas as cartas descartadas e reembaralhar">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          <span>Reembaralhar Tudo</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== ÁREA PRINCIPAL DESKTOP / TABLET ==================== -->
+  <main class="hidden md:block flex-1 max-w-5xl w-full mx-auto px-4 py-5 space-y-5">
+
+    <!-- Filtro de Categorias -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex flex-wrap gap-1.5">
+        <button onclick="filterDeckTab('ALL')" data-decktab="ALL" class="deck-tab-btn px-3 py-1.5 rounded-xl text-xs font-extrabold bg-cabecao-navy text-white transition">
+          Todos (18 Pilhas)
+        </button>
+        <button onclick="filterDeckTab('PERGUNTAS')" data-decktab="PERGUNTAS" class="deck-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+          Perguntas (108)
+        </button>
+        <button onclick="filterDeckTab('REDACAO')" data-decktab="REDACAO" class="deck-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+          Redação (40)
+        </button>
+        <button onclick="filterDeckTab('UNI_DSP')" data-decktab="UNI_DSP" class="deck-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+          Universidade &amp; Troca (48)
+        </button>
+        <button onclick="filterDeckTab('DESAFIO')" data-decktab="DESAFIO" class="deck-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+          Desafio (20)
+        </button>
+      </div>
+
+      <div id="globalCounterBadge" class="text-[11px] font-bold text-slate-500 px-2.5">
+        216 cartas disponíveis
+      </div>
+    </div>
+
+    <!-- Container Organizado dos Botões de Sorteio -->
+    <div id="decksSectionsContainer" class="space-y-6"></div>
+
+  </main>
+
+  <!-- ==================== TELA MOBILE EXCLUSIVA (< 768px) ==================== -->
+  <section id="mobileHomeView" class="md:hidden flex-1 w-full max-w-md mx-auto px-4 pt-4 pb-7 flex flex-col gap-4">
+    <!-- Cabeçalho Mobile: LOGO à esquerda + ícone e CARTAS à direita -->
+    <div id="mobileInnerHeader" class="flex items-center justify-between gap-3 px-1 pt-0.5 pb-1">
+      <div class="flex items-center gap-2 shrink-0">
+        <img src="/assets/aistudio/LOGO_ICON_758fc1db.png" alt="Símbolo CABEÇÃO" referrerpolicy="no-referrer" class="w-10 h-10 object-contain shrink-0" />
+        <div class="relative w-[112px] h-[46px] overflow-hidden flex items-center justify-center shrink-0">
+          <img src="/assets/aistudio/LOGO_HORIZONTAL_CABECAO_0eff6b30.png" alt="CABEÇÃO" referrerpolicy="no-referrer" class="w-[78px] max-w-none h-auto rotate-90 select-none" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 text-cabecao-navy shrink-0">
+        <svg class="w-7 h-7 text-cabecao-purple shrink-0" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="7" width="12" height="16" rx="2.5" transform="rotate(-10 4 7)" fill="#FFFFFF" />
+          <rect x="12" y="5" width="12" height="16" rx="2.5" transform="rotate(8 12 5)" fill="#FFFFFF" />
+        </svg>
+        <div class="text-right leading-none">
+          <div class="font-display font-normal text-2xl tracking-wide text-cabecao-navy">CARTAS</div>
+          <div id="mobileCounterBadge" class="text-[11px] font-semibold text-slate-500 tabular-nums mt-0.5">216</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista das 5 Casas em Formato de Pasta Branca com Miniaturas -->
+    <div id="mobileHousesContainer" class="flex-1 flex flex-col gap-3"></div>
+
+    <!-- Ações Inferiores na Zona do Polegar -->
+    <div class="grid grid-cols-2 gap-3 pt-3">
+      <button onclick="openSearchModal()" class="min-h-[48px] px-3 py-2.5 rounded-full bg-white border-2 border-cabecao-navy text-cabecao-navy hover:bg-slate-50 active:scale-[0.98] transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span class="font-display font-normal text-[15px] tracking-wide whitespace-nowrap">LIVRO DE GABARITOS</span>
+      </button>
+
+      <button onclick="openModal('modalConfirmReset')" class="min-h-[48px] px-3 py-2.5 rounded-full bg-cabecao-navy text-white hover:bg-slate-800 active:scale-[0.98] transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        <span class="font-display font-normal text-[15px] tracking-wide whitespace-nowrap">REEMBARALHAR</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ==================== MODAL DA CARTA SORTEADA (ANTI-SPOILER FISCAL) ==================== -->
+  <div id="modalCardDraw" onclick="handleBackdropClick(event, 'modalCardDraw')" class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-5">
+    <div class="modal-animate bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-200 flex flex-col max-h-[92vh]">
+      
+      <!-- Cabeçalho Colorido da Carta -->
+      <div id="cardModalHeader" class="px-5 py-4 text-white flex items-center justify-between bg-cabecao-perguntas">
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="cardModalCode" class="px-2.5 py-0.5 rounded-lg bg-black/25 font-mono text-xs font-extrabold tracking-wide">ALF-01</span>
+            <span id="cardModalDeckName" class="text-xs font-bold uppercase tracking-wider opacity-95">Perguntas · Fácil</span>
+          </div>
+          <div id="cardModalArea" class="font-display font-normal text-xl sm:text-2xl tracking-wide leading-tight mt-1">Linguagens</div>
+        </div>
+        <button id="cardModalCloseBtn" onclick="closeModal('modalCardDraw')" class="w-9 h-9 rounded-full bg-black/20 hover:bg-black/35 flex items-center justify-center text-white font-bold transition" aria-label="Fechar">✕</button>
+      </div>
+
+      <!-- Corpo da Carta -->
+      <div class="p-5 overflow-y-auto space-y-4">
+        <!-- Enunciado -->
+        <p id="cardModalQuestion" class="text-base sm:text-lg font-bold text-slate-900 leading-snug"></p>
+
+        <!-- Alternativas A, B, C, D -->
+        <div id="cardModalOptions" class="space-y-2.5"></div>
+
+        <!-- Caixa Especial para Cartas de Desafio e Movimento -->
+        <div id="cardModalChallengeBox" class="hidden rounded-2xl bg-[#3D3F7B]/10 border-2 border-[#3D3F7B]/30 p-4">
+          <div class="text-xs font-extrabold uppercase tracking-wider text-[#3D3F7B] mb-1">Ação Imediata da Carta</div>
+          <p id="cardModalChallengeEffect" class="text-sm font-bold text-slate-800"></p>
+        </div>
+
+        <!-- Seção Anti-Spoiler (Fiscal da Rodada) -->
+        <div id="fiscalSpoilerSection" class="pt-3 border-t border-slate-200">
+          <button id="btnRevealFiscal" onclick="revealFiscalAnswer()" class="w-full py-3.5 px-4 rounded-2xl bg-cabecao-navy hover:bg-slate-800 text-white font-extrabold text-sm flex items-center justify-center gap-2.5 shadow-md transition active:scale-[0.99]">
+            <svg class="w-5 h-5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Revelar Gabarito (Fiscal da Rodada)</span>
+          </button>
+
+          <div id="fiscalAnswerBox" class="hidden rounded-2xl bg-emerald-50 border-2 border-emerald-500/50 p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-800">Livro de Gabaritos</span>
+              <span id="fiscalCorrectLetterBadge" class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-black shadow-sm">Resposta: B</span>
+            </div>
+            <p id="fiscalExplanationText" class="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed"></p>
+          </div>
+
+          <!-- Sorteio de Competência (Aparece apenas nas cartas de Redação) -->
+          <div id="redacaoRewardSection" class="hidden mt-3 pt-3 border-t border-slate-200 space-y-3">
+            <button id="btnSpinCardCompetency" onclick="triggerCompetencySpin('card')" class="w-full py-3 px-4 rounded-2xl bg-cabecao-redacao hover:opacity-95 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition active:scale-[0.99]">
+              <span>🎲 Acertou a Pergunta? Sortear Competência Ganha</span>
+            </button>
+
+            <div id="cardCompetencyWheelBox" class="hidden rounded-2xl bg-rose-50/90 border-2 border-rose-200 p-3.5 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-rose-900">Sorteio de Marcador (1 de 3)</span>
+                <button onclick="triggerCompetencySpin('card')" class="text-[11px] font-bold text-cabecao-redacao hover:underline">Sortear novamente</button>
+              </div>
+              <div id="cardCompetencySlots" class="grid grid-cols-3 gap-2"></div>
+              <div id="cardCompetencyResultBanner" class="hidden rounded-xl bg-white border border-rose-200 px-3 py-2.5 text-center shadow-sm"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rodapé da Carta -->
+      <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <button onclick="closeModal('modalCardDraw')" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold transition">
+          Concluir &amp; Fechar
+        </button>
+        <button onclick="drawAgainSameDeck()" class="px-4 py-2 rounded-xl bg-cabecao-navy hover:bg-slate-800 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm transition">
+          <span>Sortear Outra Desta Pilha</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: SORTEIO RÁPIDO DE COMPETÊNCIA (REDAÇÃO) ==================== -->
+  <div id="modalCompetencyDraw" onclick="handleBackdropClick(event, 'modalCompetencyDraw')" class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="modal-animate bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+      <div class="px-5 py-4 bg-cabecao-redacao text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-white p-1 flex items-center justify-center shrink-0">
+            <img src="/assets/aistudio/LOGO_ICON_758fc1db.png" alt="Símbolo CABEÇÃO" referrerpolicy="no-referrer" class="w-full h-full object-contain" />
+          </div>
+          <h3 class="font-display font-normal text-xl sm:text-2xl tracking-wide">Sortear Competência Ganha</h3>
+        </div>
+        <button onclick="closeModal('modalCompetencyDraw')" class="w-8 h-8 rounded-full bg-black/20 hover:bg-black/35 flex items-center justify-center font-bold">✕</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Acertou a carta de Redação? Sorteie abaixo qual dos <strong>3 marcadores</strong> (+10 pts) você conquistou nesta rodada:
+        </p>
+
+        <div id="standaloneCompetencySlots" class="grid grid-cols-3 gap-2"></div>
+
+        <div id="standaloneCompetencyResultBanner" class="hidden rounded-2xl bg-rose-50 border-2 border-rose-200 p-3.5 text-center space-y-1"></div>
+
+        <button id="btnSpinStandalone" onclick="triggerCompetencySpin('standalone')" class="w-full py-3.5 px-4 rounded-2xl bg-cabecao-navy hover:bg-slate-800 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-md transition active:scale-[0.99]">
+          <span>🎲 Sortear Competência (1 de 3)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CONSULTA AO LIVRO DE GABARITOS ==================== -->
+  <div id="modalSearchCards" onclick="handleBackdropClick(event, 'modalSearchCards')" class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-5">
+    <div class="modal-animate bg-white rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
+      <div class="px-5 py-4 bg-cabecao-navy text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-white p-1 flex items-center justify-center shrink-0">
+            <img src="/assets/aistudio/LOGO_ICON_758fc1db.png" alt="Símbolo CABEÇÃO" referrerpolicy="no-referrer" class="w-full h-full object-contain" />
+          </div>
+          <h3 class="font-display font-normal text-xl sm:text-2xl tracking-wide">Livro de Gabaritos &amp; Banco Completo</h3>
+        </div>
+        <button onclick="closeModal('modalSearchCards')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold">✕</button>
+      </div>
+      <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-2">
+        <input type="text" id="inputCardSearch" oninput="renderSearchCardsList()" placeholder="Buscar código, área ou enunciado..." class="flex-1 min-w-[200px] px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-cabecao-purple" />
+        <select id="selectCardDeckFilter" onchange="renderSearchCardsList()" class="px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white font-semibold">
+          <option value="ALL">Todos os Baralhos (216)</option>
+          <option value="ALF">ALF — Alfabetização Fácil (12)</option>
+          <option value="F1F">F1F — Fund. I Fácil (12)</option>
+          <option value="F1M">F1M — Fund. I Média (12)</option>
+          <option value="F2F">F2F — Fund. II Fácil (12)</option>
+          <option value="F2M">F2M — Fund. II Média (12)</option>
+          <option value="F2D">F2D — Fund. II Difícil (12)</option>
+          <option value="EMF">EMF — Ensino Médio Fácil (12)</option>
+          <option value="EMM">EMM — Ensino Médio Média (12)</option>
+          <option value="EMD">EMD — Ensino Médio Difícil (12)</option>
+          <option value="UNI-A">UNI-A — Univ. Acessível (12)</option>
+          <option value="UNI-M">UNI-M — Univ. Média (12)</option>
+          <option value="UNI-D">UNI-D — Univ. Alta (12)</option>
+          <option value="DSP">DSP — Troca de Conhecimento · Disputa (12)</option>
+          <option value="RED-ALF">RED-ALF — Redação Alf. (10)</option>
+          <option value="RED-F1">RED-F1 — Redação Fund. I (10)</option>
+          <option value="RED-F2">RED-F2 — Redação Fund. II (10)</option>
+          <option value="RED-EM">RED-EM — Redação Ens. Médio (10)</option>
+          <option value="DES">DES — Desafio &amp; Movimento (20)</option>
+        </select>
+      </div>
+      <div id="searchCardsResults" class="p-4 overflow-y-auto space-y-2.5 flex-1"></div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CONFIRMAR REEMBARALHAR TUDO ==================== -->
+  <div id="modalConfirmReset" onclick="handleBackdropClick(event, 'modalConfirmReset')" class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="modal-animate bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-200 text-center space-y-4">
+      <div class="flex flex-col items-center gap-1">
+        <img src="/assets/aistudio/LOGO_ICON_758fc1db.png" alt="Símbolo CABEÇÃO" referrerpolicy="no-referrer" class="w-16 h-16 object-contain" />
+        <div class="h-[34px] overflow-hidden flex items-center justify-center">
+          <img src="/assets/aistudio/LOGO_HORIZONTAL_CABECAO_SALMAO_0723a14b.png" alt="CABEÇÃO" referrerpolicy="no-referrer" class="h-[54px] w-auto max-w-none object-contain" />
+        </div>
+      </div>
+      <div>
+        <h3 class="font-display font-normal text-2xl tracking-wide text-slate-900">Reembaralhar Todas as Pilhas?</h3>
+        <p class="text-xs text-slate-600 mt-1">Todas as cartas descartadas voltarão para seus respectivos baralhos e serão embaralhadas novamente.</p>
+      </div>
+      <div class="flex items-center justify-center gap-2.5 pt-1">
+        <button onclick="closeModal('modalConfirmReset')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">Cancelar</button>
+        <button onclick="resetAllDecks()" class="px-4 py-2 rounded-xl bg-cabecao-navy hover:bg-slate-800 text-white text-xs font-extrabold shadow transition">Sim, Reembaralhar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== NOTIFICAÇÃO TOAST ==================== -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ==================== BANCO INTEGRAL & MOTOR DO SORTEADOR ==================== -->
+  <script>
+    /**
+     * 1. BANCO DE DADOS INTEGRAL (196 CARTAS OFICIAIS DO CABEÇÃO)
+     */
+    const OFFICIAL_CARDS_DB = [
+      // PERGUNTAS — ALFABETIZAÇÃO (ALF: 12)
+      { id: 'ALF-01', deck: 'ALF', area: 'Linguagens', q: 'Na frase "As meninas chegaram cedo", qual palavra indica quem fez a ação?', opts: ['chegaram', 'meninas', 'cedo', 'as'], ans: 'B', exp: '"Meninas" é o sujeito: quem chegou.' },
+      { id: 'ALF-02', deck: 'ALF', area: 'Linguagens', q: 'Qual palavra está escrita corretamente?', opts: ['exemplo', 'ezemplo', 'esemplo', 'eksemplo'], ans: 'A', exp: 'Escreve-se "exemplo", com X e som de Z.' },
+      { id: 'ALF-03', deck: 'ALF', area: 'Linguagens', q: 'Uma placa com os dizeres "Proibido fumar", na entrada de um hospital, tem a função de:', opts: ['contar uma história', 'vender um produto', 'descrever o hospital', 'informar uma regra'], ans: 'D', exp: 'Placas informam regras e proibições.' },
+      { id: 'ALF-04', deck: 'ALF', area: 'Humanas', q: 'Segundo o IBGE, o Brasil é dividido em quantas regiões?', opts: ['3', '4', '5', '6'], ans: 'C', exp: 'Norte, Nordeste, Centro-Oeste, Sudeste e Sul.' },
+      { id: 'ALF-05', deck: 'ALF', area: 'Humanas', q: 'Até 1960, a capital do Brasil era a cidade de:', opts: ['Brasília', 'Salvador', 'Rio de Janeiro', 'São Paulo'], ans: 'C', exp: 'O Rio foi capital até a inauguração de Brasília, em 1960.' },
+      { id: 'ALF-06', deck: 'ALF', area: 'Humanas', q: 'A escravidão foi abolida no Brasil em 1888 por meio da:', opts: ['Lei Áurea', 'Constituição de 1988', 'Lei do Ventre Livre', 'Independência do Brasil'], ans: 'A', exp: 'A Lei Áurea foi assinada pela Princesa Isabel em 13/05/1888.' },
+      { id: 'ALF-07', deck: 'ALF', area: 'Natureza', q: 'Qual gás as plantas retiram do ar para fazer a fotossíntese?', opts: ['oxigênio', 'gás carbônico', 'nitrogênio', 'hélio'], ans: 'B', exp: 'As plantas absorvem gás carbônico e liberam oxigênio.' },
+      { id: 'ALF-08', deck: 'ALF', area: 'Natureza', q: 'Ao nível do mar, a água ferve a:', opts: ['0 °C', '50 °C', '100 °C', '200 °C'], ans: 'C', exp: '100 °C ao nível do mar; em altitude, ferve com menos.' },
+      { id: 'ALF-09', deck: 'ALF', area: 'Natureza', q: 'Qual órgão bombeia o sangue para todo o corpo?', opts: ['pulmão', 'fígado', 'estômago', 'coração'], ans: 'D', exp: 'O coração é o músculo que bombeia o sangue.' },
+      { id: 'ALF-10', deck: 'ALF', area: 'Matemática', q: 'Uma pizza foi dividida em 8 fatias iguais e você comeu 2. Que fração da pizza você comeu?', opts: ['1/2', '1/4', '2/6', '1/8'], ans: 'B', exp: '2/8 simplificado é 1/4.' },
+      { id: 'ALF-11', deck: 'ALF', area: 'Matemática', q: 'Um caderno custa R$ 12,00. Quanto custam 3 cadernos?', opts: ['R$ 15,00', 'R$ 24,00', 'R$ 36,00', 'R$ 32,00'], ans: 'C', exp: '3 × 12 = 36.' },
+      { id: 'ALF-12', deck: 'ALF', area: 'Matemática', q: 'Quantos minutos há em uma hora e meia?', opts: ['90', '60', '100', '150'], ans: 'A', exp: '60 + 30 = 90 minutos.' },
+
+      // PERGUNTAS — FUNDAMENTAL I FÁCIL (F1F: 12)
+      { id: 'F1F-01', deck: 'F1F', area: 'Linguagens', q: 'Na frase "O menino correu rápido", a palavra "rápido" indica:', opts: ['quem correu', 'como ele correu', 'onde ele correu', 'quando ele correu'], ans: 'B', exp: '"Rápido" indica o modo da ação.' },
+      { id: 'F1F-02', deck: 'F1F', area: 'Linguagens', q: 'Qual frase está pontuada corretamente como pergunta?', opts: ['Você vem amanhã.', 'Você vem amanhã!', 'Você vem amanhã?', 'Você, vem amanhã'], ans: 'C', exp: 'Perguntas terminam com ponto de interrogação.' },
+      { id: 'F1F-03', deck: 'F1F', area: 'Linguagens', q: 'Qual palavra é sinônimo de "contente"?', opts: ['triste', 'alegre', 'cansado', 'bravo'], ans: 'B', exp: 'Contente = alegre.' },
+      { id: 'F1F-04', deck: 'F1F', area: 'Humanas', q: 'A frota de Pedro Álvares Cabral chegou ao território que hoje é o Brasil em:', opts: ['1492', '1500', '1822', '1889'], ans: 'B', exp: 'A frota de Cabral chegou em abril de 1500.' },
+      { id: 'F1F-05', deck: 'F1F', area: 'Humanas', q: 'Antes da chegada dos portugueses, o território brasileiro era habitado por:', opts: ['povos indígenas', 'povos africanos', 'espanhóis', 'holandeses'], ans: 'A', exp: 'Milhões de indígenas já viviam aqui.' },
+      { id: 'F1F-06', deck: 'F1F', area: 'Humanas', q: 'Qual linha imaginária divide a Terra em Hemisfério Norte e Hemisfério Sul?', opts: ['Meridiano de Greenwich', 'Trópico de Capricórnio', 'Linha do Equador', 'Círculo Polar Ártico'], ans: 'C', exp: 'A Linha do Equador separa Norte e Sul.' },
+      { id: 'F1F-07', deck: 'F1F', area: 'Natureza', q: 'Os animais que se alimentam apenas de plantas são chamados de:', opts: ['carnívoros', 'onívoros', 'decompositores', 'herbívoros'], ans: 'D', exp: 'Herbívoros comem apenas vegetais.' },
+      { id: 'F1F-08', deck: 'F1F', area: 'Natureza', q: 'Em que estado físico a água se encontra no gelo?', opts: ['sólido', 'líquido', 'gasoso', 'plasma'], ans: 'A', exp: 'Gelo é água no estado sólido.' },
+      { id: 'F1F-09', deck: 'F1F', area: 'Natureza', q: 'Qual planeta do Sistema Solar é o mais próximo do Sol?', opts: ['Vênus', 'Terra', 'Marte', 'Mercúrio'], ans: 'D', exp: 'Mercúrio é o primeiro planeta a partir do Sol.' },
+      { id: 'F1F-10', deck: 'F1F', area: 'Matemática', q: 'Quanto é 25% de 80?', opts: ['15', '20', '25', '40'], ans: 'B', exp: '80 ÷ 4 = 20.' },
+      { id: 'F1F-11', deck: 'F1F', area: 'Matemática', q: 'Qual é o perímetro de um quadrado com 5 cm de lado?', opts: ['10 cm', '15 cm', '20 cm', '25 cm'], ans: 'C', exp: '4 lados × 5 cm = 20 cm.' },
+      { id: 'F1F-12', deck: 'F1F', area: 'Matemática', q: 'Uma turma tem 18 alunos, e 2/3 deles são meninas. Quantas meninas há na turma?', opts: ['6', '9', '12', '15'], ans: 'C', exp: '18 ÷ 3 = 6; 6 × 2 = 12.' },
+
+      // PERGUNTAS — FUNDAMENTAL I MÉDIA (F1M: 12)
+      { id: 'F1M-01', deck: 'F1M', area: 'Linguagens', q: 'Qual opção substitui "do João" por um pronome, sem mudar o sentido de "A bicicleta do João está quebrada"?', opts: ['A bicicleta dele está quebrada.', 'A bicicleta ele está quebrada.', 'A bicicleta lhe está quebrada.', 'A bicicleta sua dele está quebrada.'], ans: 'A', exp: '"Dele" substitui "do João".' },
+      { id: 'F1M-02', deck: 'F1M', area: 'Linguagens', q: 'Um anúncio diz: "Compre já! Últimas unidades!". A principal intenção desse texto é:', opts: ['informar dados científicos', 'convencer o leitor a comprar', 'narrar um fato passado', 'descrever um lugar'], ans: 'B', exp: 'Verbos no imperativo buscam convencer o leitor.' },
+      { id: 'F1M-03', deck: 'F1M', area: 'Linguagens', q: 'Qual é o plural correto de "cidadão"?', opts: ['cidadões', 'cidadães', 'cidadãos', 'cidadãoses'], ans: 'C', exp: 'O plural de cidadão é cidadãos.' },
+      { id: 'F1M-04', deck: 'F1M', area: 'Humanas', q: 'Quem proclamou a Independência do Brasil, em 1822?', opts: ['Tiradentes', 'Dom Pedro I', 'Getúlio Vargas', 'Deodoro da Fonseca'], ans: 'B', exp: 'Dom Pedro I, em 7 de setembro de 1822.' },
+      { id: 'F1M-05', deck: 'F1M', area: 'Humanas', q: 'Qual bioma predomina na Região Norte do Brasil?', opts: ['Caatinga', 'Pampa', 'Amazônia', 'Cerrado'], ans: 'C', exp: 'A Floresta Amazônica cobre a maior parte do Norte.' },
+      { id: 'F1M-06', deck: 'F1M', area: 'Humanas', q: 'Em uma democracia, os governantes são escolhidos principalmente por meio de:', opts: ['sorteio', 'herança familiar', 'indicação do exército', 'eleições'], ans: 'D', exp: 'Na democracia, o povo escolhe pelo voto.' },
+      { id: 'F1M-07', deck: 'F1M', area: 'Natureza', q: 'A sequência capim → gafanhoto → sapo → cobra é um exemplo de:', opts: ['cadeia alimentar', 'ciclo da água', 'fotossíntese', 'polinização'], ans: 'A', exp: 'Cada ser vivo serve de alimento ao seguinte.' },
+      { id: 'F1M-08', deck: 'F1M', area: 'Natureza', q: 'O que provoca a alternância entre dia e noite?', opts: ['a translação da Terra', 'a rotação da Terra', 'as fases da Lua', 'as estações do ano'], ans: 'B', exp: 'A rotação é o giro da Terra em torno de si, em cerca de 24 h.' },
+      { id: 'F1M-09', deck: 'F1M', area: 'Natureza', q: 'Ao misturar água e óleo, obtemos:', opts: ['uma mistura homogênea', 'uma substância pura', 'uma mistura heterogênea', 'uma solução'], ans: 'C', exp: 'Água e óleo não se misturam: formam duas fases.' },
+      { id: 'F1M-10', deck: 'F1M', area: 'Matemática', q: 'Qual é a área de um terreno retangular de 12 m por 8 m?', opts: ['40 m²', '80 m²', '96 m²', '100 m²'], ans: 'C', exp: '12 × 8 = 96 m².' },
+      { id: 'F1M-11', deck: 'F1M', area: 'Matemática', q: 'Qual é a média das notas 6, 7 e 8?', opts: ['7', '6', '7,5', '21'], ans: 'A', exp: '(6 + 7 + 8) ÷ 3 = 7.' },
+      { id: 'F1M-12', deck: 'F1M', area: 'Matemática', q: 'Uma receita usa 3 ovos para fazer 12 bolinhos. Quantos ovos são necessários para 36 bolinhos?', opts: ['6', '12', '15', '9'], ans: 'D', exp: 'O triplo de bolinhos pede o triplo de ovos: 3 × 3 = 9.' },
+
+      // PERGUNTAS — FUNDAMENTAL II FÁCIL (F2F: 12)
+      { id: 'F2F-01', deck: 'F2F', area: 'Linguagens', q: 'Qual figura de linguagem aparece em "Seus olhos são duas estrelas"?', opts: ['metáfora', 'hipérbole', 'ironia', 'onomatopeia'], ans: 'A', exp: 'Metáfora: comparação sem o "como".' },
+      { id: 'F2F-02', deck: 'F2F', area: 'Linguagens', q: 'Em "Ele não estudou, mas passou na prova", a palavra "mas" indica:', opts: ['adição', 'oposição', 'conclusão', 'causa'], ans: 'B', exp: '"Mas" é conjunção adversativa (oposição).' },
+      { id: 'F2F-03', deck: 'F2F', area: 'Linguagens', q: 'Na frase em inglês "I am tired", a palavra "tired" significa:', opts: ['feliz', 'com fome', 'cansado', 'atrasado'], ans: 'C', exp: 'Tired = cansado.' },
+      { id: 'F2F-04', deck: 'F2F', area: 'Humanas', q: 'Em qual país começou a Revolução Industrial, no século XVIII?', opts: ['França', 'Inglaterra', 'Estados Unidos', 'Alemanha'], ans: 'B', exp: 'A Inglaterra tinha carvão, capital e mão de obra.' },
+      { id: 'F2F-05', deck: 'F2F', area: 'Humanas', q: 'O que é urbanização?', opts: ['o crescimento da população urbana em relação à rural', 'o desmatamento de florestas', 'a migração da cidade para o campo', 'a construção de estradas'], ans: 'A', exp: 'Urbanização é a cidade crescer mais que o campo.' },
+      { id: 'F2F-06', deck: 'F2F', area: 'Humanas', q: 'Quais são os três Poderes da República no Brasil?', opts: ['Federal, Estadual e Municipal', 'Presidente, Senado e Câmara', 'Militar, Civil e Religioso', 'Executivo, Legislativo e Judiciário'], ans: 'D', exp: 'Executivo governa, Legislativo faz leis e Judiciário julga.' },
+      { id: 'F2F-07', deck: 'F2F', area: 'Natureza', q: 'Qual é a menor unidade estrutural dos seres vivos?', opts: ['átomo', 'órgão', 'célula', 'tecido'], ans: 'C', exp: 'Todo ser vivo é formado por células.' },
+      { id: 'F2F-08', deck: 'F2F', area: 'Natureza', q: 'Qual é a fórmula química da água?', opts: ['CO₂', 'O₂', 'NaCl', 'H₂O'], ans: 'D', exp: 'Dois hidrogênios e um oxigênio.' },
+      { id: 'F2F-09', deck: 'F2F', area: 'Natureza', q: 'Qual doença é transmitida pelo mosquito Aedes aegypti?', opts: ['dengue', 'tuberculose', 'gripe', 'sarampo'], ans: 'A', exp: 'O Aedes transmite dengue, zika e chikungunya.' },
+      { id: 'F2F-10', deck: 'F2F', area: 'Matemática', q: 'Se 3x + 5 = 20, quanto vale x?', opts: ['3', '5', '15', '25'], ans: 'B', exp: '3x = 15, logo x = 5.' },
+      { id: 'F2F-11', deck: 'F2F', area: 'Matemática', q: 'Um produto de R$ 200,00 está com 15% de desconto. Qual é o novo preço?', opts: ['R$ 170,00', 'R$ 185,00', 'R$ 150,00', 'R$ 30,00'], ans: 'A', exp: '15% de 200 = 30; 200 − 30 = 170.' },
+      { id: 'F2F-12', deck: 'F2F', area: 'Matemática', q: 'Quanto vale a soma dos ângulos internos de um triângulo?', opts: ['90°', '180°', '270°', '360°'], ans: 'B', exp: 'Sempre 180°, em qualquer triângulo.' },
+
+      // PERGUNTAS — FUNDAMENTAL II MÉDIA (F2M: 12)
+      { id: 'F2M-01', deck: 'F2M', area: 'Linguagens', q: 'Em "Choveu tanto que a rua alagou", o trecho "que a rua alagou" expressa:', opts: ['causa', 'consequência', 'condição', 'concessão'], ans: 'B', exp: '"Tanto... que" indica consequência.' },
+      { id: 'F2M-02', deck: 'F2M', area: 'Linguagens', q: 'Alguém diz "Nóis vai" em vez de "Nós vamos". Sobre isso, é correto afirmar que:', opts: ['é um erro que impede a comunicação', 'não existe variação no português', 'é uma variante linguística, adequada a certos contextos, mas não à norma-padrão', 'só acontece na escrita'], ans: 'C', exp: 'É uma variante legítima, mas fora da norma-padrão.' },
+      { id: 'F2M-03', deck: 'F2M', area: 'Linguagens', q: 'Qual gênero textual relata um fato real e recente de forma objetiva, em jornais e sites?', opts: ['crônica', 'notícia', 'poema', 'fábula'], ans: 'B', exp: 'A notícia informa fatos de forma objetiva.' },
+      { id: 'F2M-04', deck: 'F2M', area: 'Humanas', q: 'A Guerra Fria foi a disputa política e ideológica entre:', opts: ['Estados Unidos e União Soviética', 'Inglaterra e França', 'Alemanha e Japão', 'China e Índia'], ans: 'A', exp: 'EUA (capitalismo) contra URSS (socialismo), de 1947 a 1991.' },
+      { id: 'F2M-05', deck: 'F2M', area: 'Humanas', q: 'A CLT, criada em 1943 durante a Era Vargas, trata de:', opts: ['voto feminino', 'reforma agrária', 'educação básica', 'direitos trabalhistas'], ans: 'D', exp: 'A CLT reúne as leis trabalhistas (carteira, férias, jornada).' },
+      { id: 'F2M-06', deck: 'F2M', area: 'Humanas', q: 'A intensificação do efeito estufa pela ação humana se deve principalmente:', opts: ['aos terremotos', 'às chuvas ácidas', 'à emissão de gases como o CO₂ pela queima de combustíveis fósseis', 'ao buraco na camada de ozônio'], ans: 'C', exp: 'A queima de petróleo, carvão e gás libera CO₂.' },
+      { id: 'F2M-07', deck: 'F2M', area: 'Natureza', q: 'Um carro percorre 180 km em 2 horas. Qual é a velocidade média?', opts: ['60 km/h', '90 km/h', '120 km/h', '360 km/h'], ans: 'B', exp: '180 ÷ 2 = 90 km/h.' },
+      { id: 'F2M-08', deck: 'F2M', area: 'Natureza', q: 'Qual processo separa o sal da água em uma mistura de água e sal?', opts: ['filtração', 'decantação', 'catação', 'evaporação'], ans: 'D', exp: 'A água evapora e o sal fica.' },
+      { id: 'F2M-09', deck: 'F2M', area: 'Natureza', q: 'Como as vacinas protegem o organismo?', opts: ['estimulando o sistema imunológico a produzir defesas e memória', 'matando os vírus diretamente no sangue', 'agindo como antibióticos', 'substituindo os glóbulos brancos'], ans: 'A', exp: 'A vacina "treina" o sistema imune para reconhecer o agente.' },
+      { id: 'F2M-10', deck: 'F2M', area: 'Matemática', q: 'Ao lançar um dado comum de 6 faces, qual é a probabilidade de sair um número par?', opts: ['1/6', '1/3', '1/2', '2/3'], ans: 'C', exp: 'Pares: 2, 4 e 6, ou seja, 3 de 6 = 1/2.' },
+      { id: 'F2M-11', deck: 'F2M', area: 'Matemática', q: 'Uma torneira enche um tanque em 6 horas. Em quanto tempo duas torneiras iguais enchem o mesmo tanque?', opts: ['2 h', '3 h', '4 h', '12 h'], ans: 'B', exp: 'Com o dobro de torneiras, gasta-se metade do tempo.' },
+      { id: 'F2M-12', deck: 'F2M', area: 'Matemática', q: 'Um triângulo retângulo tem catetos de 6 cm e 8 cm. Quanto mede a hipotenusa?', opts: ['10 cm', '12 cm', '14 cm', '48 cm'], ans: 'A', exp: '6² + 8² = 100, e a raiz de 100 é 10.' },
+
+      // PERGUNTAS — FUNDAMENTAL II DIFÍCIL (F2D: 12)
+      { id: 'F2D-01', deck: 'F2D', area: 'Linguagens', q: 'Em "Embora estivesse cansado, terminou o trabalho", qual expressão substitui "embora" sem mudar o sentido?', opts: ['porque', 'portanto', 'ainda que', 'assim que'], ans: 'C', exp: '"Embora" e "ainda que" são concessivas.' },
+      { id: 'F2D-02', deck: 'F2D', area: 'Linguagens', q: 'Alguém olha a tempestade pela janela e diz: "Que dia lindo para ir à praia!". O efeito de sentido é de:', opts: ['ironia', 'eufemismo', 'metáfora', 'pleonasmo'], ans: 'A', exp: 'Diz-se o contrário do que se pensa: ironia.' },
+      { id: 'F2D-03', deck: 'F2D', area: 'Linguagens', q: 'Em "Li Machado de Assis nas férias", o nome do autor está no lugar da sua obra. Essa figura de linguagem é a:', opts: ['metáfora', 'hipérbole', 'antítese', 'metonímia'], ans: 'D', exp: 'Metonímia: o autor no lugar da obra.' },
+      { id: 'F2D-04', deck: 'F2D', area: 'Humanas', q: 'Em que ano começou a ditadura civil-militar no Brasil?', opts: ['1930', '1964', '1945', '1985'], ans: 'B', exp: 'O golpe de 1964 iniciou a ditadura, que foi até 1985.' },
+      { id: 'F2D-05', deck: 'F2D', area: 'Humanas', q: 'O Iluminismo, movimento do século XVIII, defendia:', opts: ['o poder absoluto do rei por direito divino', 'a volta do feudalismo', 'a razão, a liberdade e a separação dos poderes', 'a proibição da ciência'], ans: 'C', exp: 'Montesquieu, Locke e Rousseau, entre outros.' },
+      { id: 'F2D-06', deck: 'F2D', area: 'Humanas', q: 'Quando são 12h em Londres (GMT), que horas são em Brasília (GMT−3)?', opts: ['9h', '15h', '12h', '6h'], ans: 'A', exp: '12 − 3 = 9h (sem horário de verão).' },
+      { id: 'F2D-07', deck: 'F2D', area: 'Natureza', q: '"A toda ação corresponde uma reação de mesma intensidade e sentido oposto." Esse é o enunciado da:', opts: ['1ª Lei de Newton', '2ª Lei de Newton', '3ª Lei de Newton', 'Lei da Gravitação'], ans: 'C', exp: 'Lei da ação e reação.' },
+      { id: 'F2D-08', deck: 'F2D', area: 'Natureza', q: 'Ao final da mitose, uma célula origina:', opts: ['4 células com metade dos cromossomos', '1 célula maior', 'gametas', '2 células idênticas à original'], ans: 'D', exp: 'A mitose gera 2 células iguais; a meiose gera 4.' },
+      { id: 'F2D-09', deck: 'F2D', area: 'Natureza', q: 'Uma substância com pH igual a 2 é classificada como:', opts: ['ácida', 'básica', 'neutra', 'salina'], ans: 'A', exp: 'pH abaixo de 7 é ácido.' },
+      { id: 'F2D-10', deck: 'F2D', area: 'Matemática', q: 'Dada a função f(x) = 2x − 3, quanto vale f(5)?', opts: ['10', '13', '4', '7'], ans: 'D', exp: '2 × 5 − 3 = 7.' },
+      { id: 'F2D-11', deck: 'F2D', area: 'Matemática', q: 'R$ 1.000,00 aplicados a juros simples de 2% ao mês, por 5 meses, rendem quanto de juros?', opts: ['R$ 20,00', 'R$ 100,00', 'R$ 102,00', 'R$ 1.100,00'], ans: 'B', exp: '2% de 1.000 = 20 por mês; 20 × 5 = 100.' },
+      { id: 'F2D-12', deck: 'F2D', area: 'Matemática', q: 'Quais são as raízes da equação x² − 5x + 6 = 0?', opts: ['1 e 6', '−2 e −3', '2 e 3', '5 e 6'], ans: 'C', exp: '2 + 3 = 5 e 2 × 3 = 6.' },
+
+      // PERGUNTAS — ENSINO MÉDIO FÁCIL (EMF: 12)
+      { id: 'EMF-01', deck: 'EMF', area: 'Linguagens', q: 'Uma propaganda diz: "Beba água! Seu corpo agradece". Qual função da linguagem predomina?', opts: ['referencial', 'conativa (apelativa)', 'fática', 'metalinguística'], ans: 'B', exp: 'O imperativo dirige-se ao leitor: função conativa.' },
+      { id: 'EMF-02', deck: 'EMF', area: 'Linguagens', q: 'Em que ano aconteceu a Semana de Arte Moderna, marco do Modernismo brasileiro?', opts: ['1922', '1822', '1945', '1964'], ans: 'A', exp: 'A Semana de Arte Moderna aconteceu em São Paulo, em fevereiro de 1922.' },
+      { id: 'EMF-03', deck: 'EMF', area: 'Linguagens', q: '"Alô? Está me ouvindo? Alô?" Nesse trecho, a função da linguagem que predomina é a:', opts: ['poética', 'emotiva', 'referencial', 'fática'], ans: 'D', exp: 'A função fática testa o canal de comunicação.' },
+      { id: 'EMF-04', deck: 'EMF', area: 'Humanas', q: 'O que melhor define a globalização?', opts: ['o isolamento econômico dos países', 'o fim do comércio internacional', 'a intensificação dos fluxos de mercadorias, capitais e informações entre países', 'o retorno ao sistema feudal'], ans: 'C', exp: 'Globalização é a integração econômica e cultural mundial.' },
+      { id: 'EMF-05', deck: 'EMF', area: 'Humanas', q: 'A Constituição atual do Brasil, chamada de "Constituição Cidadã", é de:', opts: ['1946', '1988', '1967', '2002'], ans: 'B', exp: 'Foi promulgada após o fim da ditadura.' },
+      { id: 'EMF-06', deck: 'EMF', area: 'Humanas', q: 'Qual filósofo é o autor da frase "Penso, logo existo"?', opts: ['René Descartes', 'Platão', 'Karl Marx', 'Sócrates'], ans: 'A', exp: 'Descartes, pai do racionalismo moderno.' },
+      { id: 'EMF-07', deck: 'EMF', area: 'Natureza', q: 'Qual destas é uma fonte de energia renovável?', opts: ['petróleo', 'carvão mineral', 'solar', 'gás natural'], ans: 'C', exp: 'O Sol não se esgota na escala humana.' },
+      { id: 'EMF-08', deck: 'EMF', area: 'Natureza', q: 'Qual é a unidade de medida da corrente elétrica?', opts: ['volt', 'watt', 'ohm', 'ampère'], ans: 'D', exp: 'Ampère (A). Volt mede tensão; watt, potência.' },
+      { id: 'EMF-09', deck: 'EMF', area: 'Natureza', q: 'Nas células eucarióticas, o DNA fica principalmente no(a):', opts: ['membrana plasmática', 'núcleo', 'parede celular', 'vacúolo'], ans: 'B', exp: 'O núcleo guarda o material genético.' },
+      { id: 'EMF-10', deck: 'EMF', area: 'Matemática', q: 'Em uma pesquisa com 200 pessoas, 30% preferem futebol. Quantas pessoas preferem futebol?', opts: ['30', '60', '90', '140'], ans: 'B', exp: '10% de 200 = 20; 20 × 3 = 60.' },
+      { id: 'EMF-11', deck: 'EMF', area: 'Matemática', q: 'Em um mapa na escala 1:100.000, uma distância de 3 cm corresponde, na realidade, a:', opts: ['300 m', '30 km', '3 km', '300 km'], ans: 'C', exp: '3 × 100.000 cm = 300.000 cm = 3 km.' },
+      { id: 'EMF-12', deck: 'EMF', area: 'Matemática', q: 'Qual é a mediana do conjunto 3, 7, 1, 9, 5?', opts: ['7', '9', '3', '5'], ans: 'D', exp: 'Em ordem: 1, 3, 5, 7, 9; o termo do meio é 5.' },
+
+      // PERGUNTAS — ENSINO MÉDIO MÉDIA (EMM: 12)
+      { id: 'EMM-01', deck: 'EMM', area: 'Linguagens', q: 'Um meme reescreve, de forma humorística, o verso "Minha terra tem palmeiras, onde canta o sabiá", de Gonçalves Dias. Esse tipo de intertextualidade é a:', opts: ['paráfrase', 'paródia', 'plágio', 'resumo'], ans: 'B', exp: 'Paródia: retoma o texto com humor ou crítica.' },
+      { id: 'EMM-02', deck: 'EMM', area: 'Linguagens', q: 'Qual era o tema principal da primeira geração do Romantismo brasileiro?', opts: ['crítica social objetiva', 'arte pela arte', 'indianismo e nacionalismo', 'fluxo de consciência'], ans: 'C', exp: 'O índio como herói nacional, como em José de Alencar.' },
+      { id: 'EMM-03', deck: 'EMM', area: 'Linguagens', q: '"O desemprego caiu, contudo a informalidade cresceu." Qual expressão substitui "contudo" sem alterar o sentido?', opts: ['porque', 'portanto', 'logo', 'no entanto'], ans: 'D', exp: '"Contudo" e "no entanto" indicam oposição.' },
+      { id: 'EMM-04', deck: 'EMM', area: 'Humanas', q: 'O conceito de "indústria cultural" foi criado pelos pensadores:', opts: ['Adorno e Horkheimer', 'Durkheim e Comte', 'Marx e Engels', 'Platão e Aristóteles'], ans: 'A', exp: 'São pensadores da Escola de Frankfurt.' },
+      { id: 'EMM-05', deck: 'EMM', area: 'Humanas', q: 'A inversão térmica, comum no inverno das grandes cidades, agrava:', opts: ['as enchentes', 'a concentração de poluentes perto da superfície', 'os terremotos', 'a desertificação'], ans: 'B', exp: 'O ar frio fica preso embaixo e retém a poluição.' },
+      { id: 'EMM-06', deck: 'EMM', area: 'Humanas', q: 'A Revolta da Vacina (1904), no Rio de Janeiro, foi uma reação popular contra:', opts: ['o aumento de impostos sobre o café', 'a abolição da escravidão', 'a vacinação obrigatória contra a varíola', 'a Coroa portuguesa'], ans: 'C', exp: 'Foi contra a lei da vacina obrigatória, de Oswaldo Cruz.' },
+      { id: 'EMM-07', deck: 'EMM', area: 'Natureza', q: 'Um casal Aa × Aa tem um filho. Qual a probabilidade de ele ser aa?', opts: ['0', '1/4', '1/2', '3/4'], ans: 'B', exp: 'Os cruzamentos dão AA, Aa, Aa e aa: 1 em 4.' },
+      { id: 'EMM-08', deck: 'EMM', area: 'Natureza', q: 'Na bioacumulação, uma substância tóxica como o mercúrio atinge maior concentração nos:', opts: ['produtores', 'organismos da água parada', 'decompositores', 'consumidores do topo da cadeia alimentar'], ans: 'D', exp: 'A substância se acumula a cada nível trófico.' },
+      { id: 'EMM-09', deck: 'EMM', area: 'Natureza', q: 'A combustão completa do etanol produz:', opts: ['CO₂ e H₂O', 'O₂ e H₂', 'CO e carbono', 'apenas N₂'], ans: 'A', exp: 'A combustão completa gera gás carbônico e água.' },
+      { id: 'EMM-10', deck: 'EMM', area: 'Matemática', q: 'R$ 1.000,00 aplicados a juros compostos de 10% ao mês, por 2 meses, resultam em:', opts: ['R$ 1.200,00', 'R$ 1.100,00', 'R$ 1.210,00', 'R$ 1.020,00'], ans: 'C', exp: '1.000 × 1,1 × 1,1 = 1.210.' },
+      { id: 'EMM-11', deck: 'EMM', area: 'Matemática', q: 'Qual é o 10º termo da progressão aritmética 3, 7, 11, ...?', opts: ['40', '43', '36', '39'], ans: 'D', exp: 'a10 = 3 + 9 × 4 = 39.' },
+      { id: 'EMM-12', deck: 'EMM', area: 'Matemática', q: 'Qual é o volume de um cilindro com 2 m de raio e 5 m de altura? (Use π = 3.)', opts: ['30 m³', '60 m³', '120 m³', '20 m³'], ans: 'B', exp: 'V = πr²h = 3 × 4 × 5 = 60 m³.' },
+
+      // PERGUNTAS — ENSINO MÉDIO DIFÍCIL (EMD: 12)
+      { id: 'EMD-01', deck: 'EMD', area: 'Linguagens', q: 'Em Dom Casmurro, Bentinho narra a própria história e acusa Capitu de traição, sem que o leitor possa confirmar o fato. Isso acontece porque o narrador é:', opts: ['onisciente e neutro', 'apenas observador', 'narrador-personagem parcial, que conduz o leitor', 'inexistente no romance'], ans: 'C', exp: 'O narrador é parcial: só temos a versão de Bentinho.' },
+      { id: 'EMD-02', deck: 'EMD', area: 'Linguagens', q: 'Em um debate, a "falácia do espantalho" consiste em:', opts: ['distorcer o argumento do oponente para refutá-lo com mais facilidade', 'citar um especialista', 'atacar a pessoa, e não a ideia', 'usar dados estatísticos'], ans: 'A', exp: 'Ataca-se uma versão distorcida do argumento.' },
+      { id: 'EMD-03', deck: 'EMD', area: 'Linguagens', q: 'A obra Os Sertões, de Euclides da Cunha, retrata:', opts: ['a Revolta da Armada', 'a Guerra de Canudos', 'a Inconfidência Mineira', 'a Guerra do Paraguai'], ans: 'B', exp: 'Canudos (1896–1897), no sertão da Bahia.' },
+      { id: 'EMD-04', deck: 'EMD', area: 'Humanas', q: 'Para Max Weber, os três tipos de dominação legítima são:', opts: ['mecânica e orgânica', 'burguesa e proletária', 'teológica, metafísica e positiva', 'tradicional, carismática e racional-legal'], ans: 'D', exp: 'Tradicional, carismática e racional-legal.' },
+      { id: 'EMD-05', deck: 'EMD', area: 'Humanas', q: 'O Estado Novo (1937–1945), de Getúlio Vargas, foi marcado por:', opts: ['parlamentarismo', 'voto direto e amplo', 'centralização autoritária, censura e fechamento do Congresso', 'descentralização do poder para os estados'], ans: 'C', exp: 'Ditadura com o DIP fazendo propaganda e censura.' },
+      { id: 'EMD-06', deck: 'EMD', area: 'Humanas', q: 'Para Thomas Hobbes, como é o estado de natureza?', opts: ['pacífico e harmonioso', 'uma "guerra de todos contra todos", que leva os homens a ceder liberdade ao soberano em troca de segurança', 'um período sem necessidade de Estado', 'guiado pela vontade geral do povo'], ans: 'B', exp: 'Por isso Hobbes defende um Estado forte (o Leviatã).' },
+      { id: 'EMD-07', deck: 'EMD', area: 'Natureza', q: 'Uma lâmpada de 100 W fica ligada 5 horas por dia durante 30 dias. Quanto ela consome?', opts: ['15 kWh', '1,5 kWh', '150 kWh', '500 kWh'], ans: 'A', exp: '100 W × 5 h × 30 = 15.000 Wh = 15 kWh.' },
+      { id: 'EMD-08', deck: 'EMD', area: 'Natureza', q: 'Na eutrofização de um lago, qual é a principal causa da morte dos peixes?', opts: ['o aumento da salinidade', 'o excesso de luz', 'a queda da temperatura', 'a redução do oxigênio dissolvido, consumido na decomposição das algas'], ans: 'D', exp: 'Bactérias decompondo as algas consomem o oxigênio.' },
+      { id: 'EMD-09', deck: 'EMD', area: 'Natureza', q: 'Uma amostra de 80 g de um isótopo tem meia-vida de 5 anos. Quanto restará após 15 anos?', opts: ['20 g', '5 g', '10 g', '40 g'], ans: 'C', exp: '80 → 40 → 20 → 10 g (3 meias-vidas).' },
+      { id: 'EMD-10', deck: 'EMD', area: 'Matemática', q: 'Quantas comissões diferentes de 3 pessoas podem ser formadas a partir de um grupo de 6?', opts: ['18', '20', '120', '216'], ans: 'B', exp: 'C(6,3) = 6 × 5 × 4 ÷ 6 = 20.' },
+      { id: 'EMD-11', deck: 'EMD', area: 'Matemática', q: 'Ao lançar duas moedas, qual é a probabilidade de sair pelo menos uma cara?', opts: ['1/4', '1/2', '3/4', '1'], ans: 'C', exp: 'Só "coroa e coroa" não tem cara: 1 − 1/4 = 3/4.' },
+      { id: 'EMD-12', deck: 'EMD', area: 'Matemática', q: 'Uma colônia de bactérias dobra a cada hora. Começando com 1.000 bactérias, em quantas horas ela chega a 32.000?', opts: ['6', '16', '32', '5'], ans: 'D', exp: '1 → 2 → 4 → 8 → 16 → 32 mil: 5 horas.' },
+
+      // UNIVERSIDADE — ACESSÍVEL (UNI-A: 12)
+      { id: 'UNI-A-01', deck: 'UNI-A', area: 'Linguagens', q: 'Uma campanha diz: "Doe sangue, salve vidas". O uso do verbo no imperativo serve para:', opts: ['descrever um hospital', 'convocar o leitor à ação', 'narrar uma história', 'explicar uma regra gramatical'], ans: 'B', exp: 'O imperativo chama o leitor a agir.' },
+      { id: 'UNI-A-02', deck: 'UNI-A', area: 'Linguagens', q: 'Uma placa que mostra apenas o desenho de um cigarro cortado por uma faixa usa linguagem:', opts: ['verbal', 'mista', 'não verbal', 'metalinguística'], ans: 'C', exp: 'Só imagem, sem palavras: linguagem não verbal.' },
+      { id: 'UNI-A-03', deck: 'UNI-A', area: 'Linguagens', q: 'O poeta Carlos Drummond de Andrade faz parte de qual movimento literário?', opts: ['Barroco', 'Arcadismo', 'Romantismo', 'Modernismo'], ans: 'D', exp: 'Drummond é da segunda geração modernista.' },
+      { id: 'UNI-A-04', deck: 'UNI-A', area: 'Humanas', q: 'O que é êxodo rural?', opts: ['a migração do campo para a cidade', 'a migração da cidade para o campo', 'a migração entre países', 'o turismo em áreas rurais'], ans: 'A', exp: 'Saída em massa do campo rumo às cidades.' },
+      { id: 'UNI-A-05', deck: 'UNI-A', area: 'Humanas', q: 'Em qual morro do Rio de Janeiro está o Cristo Redentor?', opts: ['Pão de Açúcar', 'Corcovado', 'Dois Irmãos', 'Vidigal'], ans: 'B', exp: 'O Cristo fica no Corcovado, inaugurado em 1931.' },
+      { id: 'UNI-A-06', deck: 'UNI-A', area: 'Humanas', q: 'A Declaração Universal dos Direitos Humanos, de 1948, foi adotada pela:', opts: ['OTAN', 'OEA', 'ONU', 'União Europeia'], ans: 'C', exp: 'A Assembleia Geral da ONU a adotou em 10/12/1948.' },
+      { id: 'UNI-A-07', deck: 'UNI-A', area: 'Natureza', q: 'O lixo orgânico (cascas de frutas, restos de comida) pode virar adubo por meio da:', opts: ['incineração', 'disposição em aterro', 'reciclagem mecânica', 'compostagem'], ans: 'D', exp: 'Na compostagem, microrganismos decompõem o lixo orgânico.' },
+      { id: 'UNI-A-08', deck: 'UNI-A', area: 'Natureza', q: 'A camada de ozônio protege a Terra contra:', opts: ['a radiação ultravioleta', 'a chuva ácida', 'os terremotos', 'o frio intenso'], ans: 'A', exp: 'O ozônio filtra os raios UV do Sol.' },
+      { id: 'UNI-A-09', deck: 'UNI-A', area: 'Natureza', q: 'Desprezando a resistência do ar, um objeto em queda livre perto da superfície da Terra acelera cerca de:', opts: ['1 m/s²', '10 m/s²', '5 m/s²', '100 m/s²'], ans: 'B', exp: 'A gravidade vale cerca de 9,8 m/s², ou seja, perto de 10.' },
+      { id: 'UNI-A-10', deck: 'UNI-A', area: 'Matemática', q: 'Uma casa consumiu 150 kWh no mês, e cada kWh custa R$ 0,80. Qual é o valor da conta?', opts: ['R$ 120,00', 'R$ 100,00', 'R$ 150,00', 'R$ 180,00'], ans: 'A', exp: '150 × 0,80 = 120.' },
+      { id: 'UNI-A-11', deck: 'UNI-A', area: 'Matemática', q: 'Um carro faz 12 km por litro. Quantos litros ele gasta para rodar 240 km?', opts: ['12 L', '18 L', '20 L', '24 L'], ans: 'C', exp: '240 ÷ 12 = 20 L.' },
+      { id: 'UNI-A-12', deck: 'UNI-A', area: 'Matemática', q: 'Um salário de R$ 2.000,00 teve aumento de 10%. Qual é o novo salário?', opts: ['R$ 2.010,00', 'R$ 2.100,00', 'R$ 2.020,00', 'R$ 2.200,00'], ans: 'D', exp: '10% de 2.000 = 200; 2.000 + 200 = 2.200.' },
+
+      // UNIVERSIDADE — MÉDIA CONCORRÊNCIA (UNI-M: 12)
+      { id: 'UNI-M-01', deck: 'UNI-M', area: 'Linguagens', q: 'Em uma conversa por aplicativo entre amigos, abreviações como "vc" e "tb" são:', opts: ['parte da norma-padrão', 'adequadas, porque a situação é informal', 'sempre erradas, em qualquer contexto', 'próprias de textos científicos'], ans: 'B', exp: 'A adequação depende da situação de comunicação.' },
+      { id: 'UNI-M-02', deck: 'UNI-M', area: 'Linguagens', q: 'A escritora Clarice Lispector é conhecida por:', opts: ['poesia parnasiana', 'romances regionalistas de 1930', 'narrativa intimista e introspectiva', 'romances indianistas'], ans: 'C', exp: 'Ela explora o mundo interior dos personagens.' },
+      { id: 'UNI-M-03', deck: 'UNI-M', area: 'Linguagens', q: 'Em "Despite the rain, they went out", a palavra "despite" expressa:', opts: ['causa', 'finalidade', 'tempo', 'concessão (apesar de)'], ans: 'D', exp: 'Despite = apesar de (concessão).' },
+      { id: 'UNI-M-04', deck: 'UNI-M', area: 'Humanas', q: 'Qual atividade econômica marcou Minas Gerais no século XVIII?', opts: ['mineração do ouro', 'cultivo da cana-de-açúcar', 'cultivo do café', 'extração da borracha'], ans: 'A', exp: 'O Ciclo do Ouro, em Ouro Preto e região.' },
+      { id: 'UNI-M-05', deck: 'UNI-M', area: 'Humanas', q: 'A maior parte da energia elétrica do Brasil vem de usinas:', opts: ['termelétricas a carvão', 'hidrelétricas', 'nucleares', 'eólicas'], ans: 'B', exp: 'As hidrelétricas geram mais da metade da eletricidade do país.' },
+      { id: 'UNI-M-06', deck: 'UNI-M', area: 'Humanas', q: 'Para Karl Marx, a "mais-valia" é:', opts: ['o imposto pago ao Estado', 'o lucro do comércio exterior', 'a diferença entre o valor produzido pelo trabalhador e o salário que ele recebe', 'o salário mínimo'], ans: 'C', exp: 'É o trabalho não pago, apropriado pelo capitalista.' },
+      { id: 'UNI-M-07', deck: 'UNI-M', area: 'Natureza', q: 'Segundo a teoria da seleção natural, de Darwin:', opts: ['características adquiridas pelo uso são herdadas', 'as mutações surgem para atender a uma necessidade', 'as espécies não mudam', 'os indivíduos mais adaptados ao ambiente sobrevivem e se reproduzem mais'], ans: 'D', exp: 'O ambiente "seleciona" os mais aptos.' },
+      { id: 'UNI-M-08', deck: 'UNI-M', area: 'Natureza', q: 'Um resistor de 10 Ω é ligado a uma tensão de 20 V. Qual é a corrente elétrica?', opts: ['0,5 A', '2 A', '10 A', '200 A'], ans: 'B', exp: 'I = V ÷ R = 20 ÷ 10 = 2 A.' },
+      { id: 'UNI-M-09', deck: 'UNI-M', area: 'Natureza', q: 'A chuva ácida é causada principalmente pela emissão de óxidos de:', opts: ['enxofre e nitrogênio', 'oxigênio', 'hélio', 'sódio'], ans: 'A', exp: 'SO₂ e NOx reagem com a água da chuva e formam ácidos.' },
+      { id: 'UNI-M-10', deck: 'UNI-M', area: 'Matemática', q: 'Um táxi cobra R$ 5,00 fixos mais R$ 2,00 por km rodado. Quanto custa uma corrida de 10 km?', opts: ['R$ 20,00', 'R$ 50,00', 'R$ 25,00', 'R$ 7,00'], ans: 'C', exp: '5 + 2 × 10 = 25.' },
+      { id: 'UNI-M-11', deck: 'UNI-M', area: 'Matemática', q: 'Uma urna tem 3 bolas vermelhas e 5 azuis. Qual é a probabilidade de retirar uma bola vermelha?', opts: ['3/5', '3/8', '5/8', '1/3'], ans: 'B', exp: '3 vermelhas em 8 bolas.' },
+      { id: 'UNI-M-12', deck: 'UNI-M', area: 'Matemática', q: 'No mesmo momento, um poste projeta sombra de 6 m, e uma pessoa de 1,80 m projeta sombra de 1,20 m. Qual é a altura do poste?', opts: ['7,2 m', '8 m', '10 m', '9 m'], ans: 'D', exp: '1,8 ÷ 1,2 = 1,5; 6 × 1,5 = 9 m.' },
+
+      // UNIVERSIDADE — ALTA CONCORRÊNCIA (UNI-D: 12)
+      { id: 'UNI-D-01', deck: 'UNI-D', area: 'Linguagens', q: 'Uma característica marcante de Grande Sertão: Veredas, de Guimarães Rosa, é:', opts: ['linguagem parnasiana e rebuscada', 'recriação da linguagem, com neologismos e oralidade sertaneja', 'linguagem jornalística e objetiva', 'versos com rima e métrica fixas'], ans: 'B', exp: 'Rosa inventa palavras e recria a fala do sertanejo.' },
+      { id: 'UNI-D-02', deck: 'UNI-D', area: 'Linguagens', q: 'Qual frase está correta segundo a norma-padrão?', opts: ['Faz dois anos que me formei.', 'Fazem dois anos que me formei.', 'Fazem-se dois anos que me formei.', 'Fizeram dois anos que me formei.'], ans: 'A', exp: 'No sentido de tempo, "fazer" é impessoal e fica no singular.' },
+      { id: 'UNI-D-03', deck: 'UNI-D', area: 'Linguagens', q: 'Em um texto argumentativo, o "argumento de autoridade" consiste em:', opts: ['atacar quem pensa diferente', 'generalizar a partir de um caso', 'apelar para a emoção do leitor', 'citar um especialista ou instituição reconhecida para sustentar a ideia'], ans: 'D', exp: 'O texto se apoia na credibilidade de uma fonte reconhecida.' },
+      { id: 'UNI-D-04', deck: 'UNI-D', area: 'Humanas', q: 'A independência da maioria das colônias da África e da Ásia aconteceu principalmente:', opts: ['no século XVI', 'antes da Primeira Guerra Mundial', 'após a Segunda Guerra Mundial', 'após o ano 2000'], ans: 'C', exp: 'Entre 1945 e 1975, sobretudo.' },
+      { id: 'UNI-D-05', deck: 'UNI-D', area: 'Humanas', q: 'O "imperativo categórico" é um conceito do filósofo:', opts: ['Friedrich Nietzsche', 'Immanuel Kant', 'Aristóteles', 'Nicolau Maquiavel'], ans: 'B', exp: 'Kant: aja de modo que sua ação possa virar lei universal.' },
+      { id: 'UNI-D-06', deck: 'UNI-D', area: 'Humanas', q: 'No Brasil, o fenômeno El Niño costuma provocar:', opts: ['neve no Nordeste', 'chuvas fortes no Nordeste e seca no Sul', 'furacões no Sudeste', 'secas no Norte e Nordeste e chuvas acima da média no Sul'], ans: 'D', exp: 'O aquecimento do Pacífico altera as chuvas no Brasil.' },
+      { id: 'UNI-D-07', deck: 'UNI-D', area: 'Natureza', q: 'Quantos mols há em 36 g de água? (Massa molar da água = 18 g/mol.)', opts: ['1 mol', '2 mol', '18 mol', '36 mol'], ans: 'B', exp: '36 ÷ 18 = 2 mol.' },
+      { id: 'UNI-D-08', deck: 'UNI-D', area: 'Natureza', q: 'Que tipo de lente corrige a miopia?', opts: ['convergente', 'cilíndrica', 'divergente', 'prismática'], ans: 'C', exp: 'A lente divergente leva a imagem de volta para a retina.' },
+      { id: 'UNI-D-09', deck: 'UNI-D', area: 'Natureza', q: 'O daltonismo é uma herança recessiva ligada ao cromossomo X. Uma mulher portadora tem filhos com um homem de visão normal. Sabendo que a criança é um menino, qual a probabilidade de ele ser daltônico?', opts: ['0', '1/4', '1/2', '1'], ans: 'C', exp: 'O menino recebe um dos dois X da mãe: 1 em 2.' },
+      { id: 'UNI-D-10', deck: 'UNI-D', area: 'Matemática', q: 'Um carro de R$ 50.000,00 perde 20% do valor a cada ano. Quanto ele valerá depois de 2 anos?', opts: ['R$ 30.000,00', 'R$ 40.000,00', 'R$ 36.000,00', 'R$ 32.000,00'], ans: 'D', exp: '50.000 × 0,8 × 0,8 = 32.000.' },
+      { id: 'UNI-D-11', deck: 'UNI-D', area: 'Matemática', q: 'Em estatística, o desvio padrão mede:', opts: ['o quanto os dados se espalham em torno da média', 'o valor central dos dados', 'o valor mais frequente', 'o maior valor do conjunto'], ans: 'A', exp: 'Quanto maior o desvio, mais espalhados estão os dados.' },
+      { id: 'UNI-D-12', deck: 'UNI-D', area: 'Matemática', q: 'Uma caixa-d\'água em forma de cubo tem 2 m de aresta. Quantos litros ela armazena?', opts: ['800 L', '8.000 L', '4.000 L', '80.000 L'], ans: 'B', exp: '2 × 2 × 2 = 8 m³, e 1 m³ = 1.000 L.' },
+
+      // DISPUTA (DSP: 12)
+      { id: 'DSP-01', deck: 'DSP', area: 'Linguagens', q: 'Passe para o discurso indireto a frase: Ela disse: — Vou amanhã.', opts: ['Ela disse que vou amanhã.', 'Ela disse: iria amanhã.', 'Ela disse que iria no dia seguinte.', 'Ela disse que foi ontem.'], ans: 'C', exp: '"Vou" passa a "iria", e "amanhã" passa a "no dia seguinte".' },
+      { id: 'DSP-02', deck: 'DSP', area: 'Linguagens', q: '"O governo anunciou novas medidas. Estas, porém, foram muito criticadas." A palavra "Estas" retoma:', opts: ['o governo', 'as medidas', 'as críticas', 'o anúncio'], ans: 'B', exp: 'O pronome retoma o termo feminino plural mais próximo.' },
+      { id: 'DSP-03', deck: 'DSP', area: 'Linguagens', q: 'Qual alternativa descreve o Cubismo, uma das vanguardas europeias?', opts: ['culto à velocidade e às máquinas', 'exploração do inconsciente e dos sonhos', 'deformação das figuras para expressar emoções', 'fragmentação e geometrização das formas, com vários pontos de vista ao mesmo tempo'], ans: 'D', exp: 'Picasso e Braque. As outras opções são Futurismo, Surrealismo e Expressionismo.' },
+      { id: 'DSP-04', deck: 'DSP', area: 'Humanas', q: 'Na Primeira República, a "política do café com leite" foi:', opts: ['a alternância de presidentes de São Paulo e Minas Gerais no poder', 'um programa de incentivo à exportação de leite', 'uma aliança entre Rio de Janeiro e Bahia', 'a política de imigração europeia'], ans: 'A', exp: 'Paulistas (café) e mineiros (leite) revezavam-se na Presidência.' },
+      { id: 'DSP-05', deck: 'DSP', area: 'Humanas', q: 'Na última etapa da transição demográfica, um país apresenta:', opts: ['alta natalidade e alta mortalidade', 'baixa natalidade, baixa mortalidade e envelhecimento da população', 'alta natalidade e mortalidade em queda', 'crescimento populacional acelerado'], ans: 'B', exp: 'Poucos nascimentos e vida longa levam ao envelhecimento.' },
+      { id: 'DSP-06', deck: 'DSP', area: 'Humanas', q: 'Para Aristóteles, a virtude é:', opts: ['a obediência às leis divinas', 'a busca do prazer máximo', 'o justo meio entre dois extremos, o excesso e a falta', 'o cumprimento do imperativo categórico'], ans: 'C', exp: 'Ex.: a coragem fica entre a covardia e a imprudência.' },
+      { id: 'DSP-07', deck: 'DSP', area: 'Natureza', q: 'Qual é a energia cinética de um corpo de 2 kg que se move a 10 m/s?', opts: ['20 J', '200 J', '50 J', '100 J'], ans: 'D', exp: 'Ec = m × v² ÷ 2 = 2 × 100 ÷ 2 = 100 J.' },
+      { id: 'DSP-08', deck: 'DSP', area: 'Natureza', q: 'Quais são os menores coeficientes inteiros que balanceiam a reação H₂ + O₂ → H₂O?', opts: ['1, 1, 1', '2, 1, 2', '1, 2, 1', '2, 2, 2'], ans: 'B', exp: '2 H₂ + 1 O₂ → 2 H₂O.' },
+      { id: 'DSP-09', deck: 'DSP', area: 'Natureza', q: 'Bactérias do gênero Rhizobium, nas raízes de leguminosas como o feijão, realizam a:', opts: ['desnitrificação', 'fotossíntese', 'fixação biológica do nitrogênio', 'fermentação alcoólica'], ans: 'C', exp: 'Transformam o N₂ do ar em compostos que a planta usa.' },
+      { id: 'DSP-10', deck: 'DSP', area: 'Matemática', q: 'Ao lançar dois dados comuns, qual é a probabilidade de a soma ser 7?', opts: ['1/6', '1/12', '7/36', '1/3'], ans: 'A', exp: '6 combinações (1+6, 2+5...) em 36 = 1/6.' },
+      { id: 'DSP-11', deck: 'DSP', area: 'Matemática', q: 'Qual é a distância entre os pontos (1, 2) e (4, 6) no plano cartesiano?', opts: ['3', '4', '5', '7'], ans: 'C', exp: '√(3² + 4²) = √25 = 5.' },
+      { id: 'DSP-12', deck: 'DSP', area: 'Matemática', q: 'R$ 2.000,00 aplicados a juros compostos de 5% ao mês, por 3 meses, resultam em:', opts: ['R$ 2.300,00', 'R$ 2.310,50', 'R$ 2.150,00', 'R$ 2.315,25'], ans: 'D', exp: '2.000 → 2.100 → 2.205 → 2.315,25.' },
+
+      // REDAÇÃO — ALFABETIZAÇÃO (RED-ALF: 10)
+      { id: 'RED-ALF-01', deck: 'RED-ALF', area: 'Redação · Competências', q: 'Uma redação deve começar com:', opts: ['a introdução', 'a conclusão', 'o desenvolvimento', 'a assinatura do autor'], ans: 'A', exp: 'A introdução apresenta o tema e a tese.' },
+      { id: 'RED-ALF-02', deck: 'RED-ALF', area: 'Redação · Competências', q: 'Como começa cada novo parágrafo de uma redação?', opts: ['com letra minúscula', 'com um recuo (espaço) no início da linha', 'com um número', 'com um desenho'], ans: 'B', exp: 'O recuo mostra ao leitor que um novo parágrafo começou.' },
+      { id: 'RED-ALF-03', deck: 'RED-ALF', area: 'Redação · Competências', q: 'Qual frase usa letras maiúsculas corretamente?', opts: ['eu moro no rio de janeiro.', 'Eu moro no Rio de Janeiro.', 'eu Moro no rio de Janeiro.', 'Eu moro no rio De janeiro.'], ans: 'B', exp: 'Início de frase e nomes próprios levam maiúscula.' },
+      { id: 'RED-ALF-04', deck: 'RED-ALF', area: 'Redação · Competências', q: 'O texto dissertativo-argumentativo, cobrado no ENEM, serve para:', opts: ['contar uma história inventada', 'fazer um poema', 'defender uma opinião com argumentos', 'escrever uma carta pessoal'], ans: 'C', exp: 'Defende-se uma tese com argumentos.' },
+      { id: 'RED-ALF-05', deck: 'RED-ALF', area: 'Redação · Conectivos', q: 'Para que serve o ponto final?', opts: ['para fazer uma pergunta', 'para exclamar', 'para separar palavras', 'para terminar uma frase'], ans: 'D', exp: 'O ponto final encerra frases afirmativas.' },
+      { id: 'RED-ALF-06', deck: 'RED-ALF', area: 'Redação · Competências', q: 'As três partes básicas de uma redação são introdução, desenvolvimento e:', opts: ['conclusão', 'resumo', 'título', 'bibliografia'], ans: 'A', exp: 'Introdução, desenvolvimento e conclusão.' },
+      { id: 'RED-ALF-07', deck: 'RED-ALF', area: 'Redação · Conectivos', q: 'Qual palavra liga duas ideias somando uma à outra?', opts: ['mas', 'e', 'porém', 'embora'], ans: 'B', exp: '"E" é conectivo de adição.' },
+      { id: 'RED-ALF-08', deck: 'RED-ALF', area: 'Redação · Competências', q: 'A redação do ENEM deve ser escrita em:', opts: ['versos', 'forma de lista', 'prosa (texto corrido, em parágrafos)', 'desenhos'], ans: 'C', exp: 'Verso ou lista não são aceitos.' },
+      { id: 'RED-ALF-09', deck: 'RED-ALF', area: 'Redação · Competências', q: 'Uma redação que foge totalmente do tema proposto recebe:', opts: ['nota máxima', 'metade da nota', 'pontos de bônus', 'nota zero'], ans: 'D', exp: 'Fuga total ao tema zera a redação.' },
+      { id: 'RED-ALF-10', deck: 'RED-ALF', area: 'Redação · Competências', q: 'Quantas linhas, no máximo, tem a folha de redação do ENEM?', opts: ['15', '20', '30', '50'], ans: 'C', exp: 'A folha oficial tem 30 linhas.' },
+
+      // REDAÇÃO — FUNDAMENTAL I (RED-F1: 10)
+      { id: 'RED-F1-01', deck: 'RED-F1', area: 'Redação · Competências', q: 'O que é o tema da redação?', opts: ['o assunto proposto pela prova, sobre o qual o texto deve ser escrito', 'um título inventado pelo aluno', 'o nome do autor do texto motivador', 'a última frase do texto'], ans: 'A', exp: 'O tema vem na proposta da prova.' },
+      { id: 'RED-F1-02', deck: 'RED-F1', area: 'Redação · Conectivos', q: 'Qual conectivo indica causa?', opts: ['mas', 'portanto', 'porque', 'embora'], ans: 'C', exp: '"Porque" introduz a causa.' },
+      { id: 'RED-F1-03', deck: 'RED-F1', area: 'Redação · Conectivos', q: 'Para não repetir "a escola" várias vezes, o melhor é:', opts: ['escrever "escola" de novo', 'usar "a instituição" ou "ela"', 'apagar a frase', 'usar uma gíria'], ans: 'B', exp: 'Sinônimos e pronomes evitam repetição (coesão).' },
+      { id: 'RED-F1-04', deck: 'RED-F1', area: 'Redação · Competências', q: 'Que tipo de linguagem a redação do ENEM exige?', opts: ['gírias', 'abreviações de internet', 'linguagem informal', 'norma-padrão (formal)'], ans: 'D', exp: 'A Competência 1 cobra a norma-padrão.' },
+      { id: 'RED-F1-05', deck: 'RED-F1', area: 'Redação · Conectivos', q: 'Qual conectivo é usado para concluir uma ideia?', opts: ['além disso', 'portanto', 'porém', 'por exemplo'], ans: 'B', exp: '"Portanto" introduz uma conclusão.' },
+      { id: 'RED-F1-06', deck: 'RED-F1', area: 'Redação · Conectivos', q: '"A leitura melhora o vocabulário, ___ quem lê muito conhece mais palavras." Qual conectivo completa a frase?', opts: ['pois', 'mas', 'embora', 'entretanto'], ans: 'A', exp: '"Pois" explica a ideia anterior.' },
+      { id: 'RED-F1-07', deck: 'RED-F1', area: 'Redação · Competências', q: 'Escrever "a gente vamos" na redação prejudica a nota em qual aspecto?', opts: ['compreensão do tema', 'proposta de intervenção', 'domínio da norma-padrão (Competência 1)', 'nenhum'], ans: 'C', exp: 'É erro de concordância: o correto é "a gente vai" ou "nós vamos".' },
+      { id: 'RED-F1-08', deck: 'RED-F1', area: 'Redação · Competências', q: 'Em quantas competências a redação do ENEM é avaliada?', opts: ['3', '4', '10', '5'], ans: 'D', exp: 'São 5 competências, de 0 a 200 pontos cada.' },
+      { id: 'RED-F1-09', deck: 'RED-F1', area: 'Redação · Competências', q: 'Na redação do ENEM, o título é:', opts: ['opcional', 'obrigatório', 'proibido', 'vale 200 pontos'], ans: 'A', exp: 'O título é opcional e não conta pontos.' },
+      { id: 'RED-F1-10', deck: 'RED-F1', area: 'Redação · Competências', q: 'Qual é a nota máxima da redação do ENEM?', opts: ['100', '1.000', '500', '10'], ans: 'B', exp: '5 competências × 200 = 1.000.' },
+
+      // REDAÇÃO — FUNDAMENTAL II (RED-F2: 10)
+      { id: 'RED-F2-01', deck: 'RED-F2', area: 'Redação · Competências', q: 'O que é a tese de uma redação?', opts: ['um resumo dos textos motivadores', 'a opinião central que o autor defende', 'uma citação de um autor famoso', 'o último parágrafo do texto'], ans: 'B', exp: 'A tese é a ideia que o texto inteiro defende.' },
+      { id: 'RED-F2-02', deck: 'RED-F2', area: 'Redação · Competências', q: 'Em qual parte da redação a tese costuma ser apresentada?', opts: ['na introdução', 'na conclusão', 'no título', 'no rascunho'], ans: 'A', exp: 'A tese costuma vir no fim da introdução.' },
+      { id: 'RED-F2-03', deck: 'RED-F2', area: 'Redação · Conectivos', q: 'Qual conectivo indica oposição?', opts: ['além disso', 'logo', 'contudo', 'visto que'], ans: 'C', exp: '"Contudo" indica oposição.' },
+      { id: 'RED-F2-04', deck: 'RED-F2', area: 'Redação · Repertório', q: 'O que é um argumento por exemplificação?', opts: ['atacar quem pensa diferente', 'repetir a tese com outras palavras', 'fazer perguntas ao leitor', 'apresentar um caso concreto que comprove a ideia'], ans: 'D', exp: 'Um caso real torna o argumento concreto.' },
+      { id: 'RED-F2-05', deck: 'RED-F2', area: 'Redação · Repertório', q: 'O que é repertório sociocultural?', opts: ['trechos copiados dos textos motivadores', 'conhecimentos de outras áreas, como dados, leis, obras e fatos históricos, usados para fundamentar o texto', 'uma opinião pessoal sem base', 'gírias da região do autor'], ans: 'B', exp: 'Repertório é conhecimento externo usado de forma produtiva.' },
+      { id: 'RED-F2-06', deck: 'RED-F2', area: 'Redação · Repertório', q: 'O que acontece com trechos copiados dos textos motivadores?', opts: ['valem pontos extras', 'são obrigatórios', 'não são contados como linhas escritas pelo candidato', 'garantem a nota máxima'], ans: 'C', exp: 'As linhas copiadas são desconsideradas.' },
+      { id: 'RED-F2-07', deck: 'RED-F2', area: 'Redação · Competências', q: 'O que a Competência 5 do ENEM avalia?', opts: ['a proposta de intervenção para o problema, que respeite os direitos humanos', 'a ortografia', 'o uso de conectivos', 'o tamanho do texto'], ans: 'A', exp: 'Proposta de intervenção que respeite os direitos humanos.' },
+      { id: 'RED-F2-08', deck: 'RED-F2', area: 'Redação · Conectivos', q: '"O uso excessivo de celulares ___ problemas de sono entre os jovens." Qual expressão constrói uma relação de causa e consequência?', opts: ['apesar de', 'embora', 'contudo', 'tem provocado'], ans: 'D', exp: 'O verbo liga a causa (celular) à consequência (sono).' },
+      { id: 'RED-F2-09', deck: 'RED-F2', area: 'Redação · Repertório', q: 'Um bom parágrafo de desenvolvimento deve:', opts: ['reunir várias ideias soltas', 'ter uma única frase', 'apresentar um argumento principal e fundamentá-lo', 'repetir a introdução'], ans: 'C', exp: 'Um argumento por parágrafo, bem fundamentado.' },
+      { id: 'RED-F2-10', deck: 'RED-F2', area: 'Redação · Competências', q: 'No ENEM, um texto com até quantas linhas é considerado "insuficiente" e recebe nota zero?', opts: ['3', '7', '15', '20'], ans: 'B', exp: 'Até 7 linhas é texto insuficiente e recebe nota zero.' },
+
+      // REDAÇÃO — ENSINO MÉDIO (RED-EM: 10)
+      { id: 'RED-EM-01', deck: 'RED-EM', area: 'Redação · Competências', q: 'Uma proposta de intervenção completa tem cinco elementos. Qual destes NÃO é um deles?', opts: ['agente', 'ação', 'finalidade', 'pergunta retórica'], ans: 'D', exp: 'Os cinco elementos são agente, ação, modo/meio, finalidade e detalhamento.' },
+      { id: 'RED-EM-02', deck: 'RED-EM', area: 'Redação · Competências', q: '"O Ministério da Educação deve criar campanhas nas escolas, por meio de palestras, a fim de conscientizar os jovens." O trecho "a fim de conscientizar os jovens" é o(a):', opts: ['agente', 'meio', 'finalidade', 'ação'], ans: 'C', exp: '"A fim de" indica finalidade.' },
+      { id: 'RED-EM-03', deck: 'RED-EM', area: 'Redação · Competências', q: 'Na mesma frase da carta anterior, "por meio de palestras" é o(a):', opts: ['agente', 'modo/meio', 'finalidade', 'ação'], ans: 'B', exp: '"Por meio de" indica o modo/meio.' },
+      { id: 'RED-EM-04', deck: 'RED-EM', area: 'Redação · Competências', q: 'O que a Competência 3 do ENEM avalia?', opts: ['a capacidade de selecionar, relacionar, organizar e interpretar informações em defesa de um ponto de vista', 'o domínio da norma-padrão', 'o uso de conectivos', 'a proposta de intervenção'], ans: 'A', exp: 'A Competência 3 avalia o projeto de texto e a argumentação.' },
+      { id: 'RED-EM-05', deck: 'RED-EM', area: 'Redação · Conectivos', q: 'O que a Competência 4 do ENEM avalia?', opts: ['a compreensão do tema', 'a ortografia', 'a proposta de intervenção', 'os mecanismos linguísticos de coesão, como conectivos e retomadas'], ans: 'D', exp: 'A Competência 4 avalia a coesão.' },
+      { id: 'RED-EM-06', deck: 'RED-EM', area: 'Redação · Competências', q: 'O que significa "tangenciar o tema"?', opts: ['copiar os textos motivadores', 'escrever em forma de poema', 'falar do assunto geral sem abordar o recorte específico do tema', 'ultrapassar 30 linhas'], ans: 'C', exp: 'Tangenciar o tema derruba a nota em várias competências.' },
+      { id: 'RED-EM-07', deck: 'RED-EM', area: 'Redação · Conectivos', q: 'Expressões como "sob esse viés", "nesse sentido" e "ademais" são:', opts: ['gírias acadêmicas', 'operadores argumentativos que ligam ideias e parágrafos', 'figuras de linguagem', 'erros de concordância'], ans: 'B', exp: 'São conectivos que dão coesão ao texto.' },
+      { id: 'RED-EM-08', deck: 'RED-EM', area: 'Redação · Competências', q: 'Uma proposta de intervenção que desrespeita os direitos humanos:', opts: ['recebe nota zero na Competência 5', 'não afeta a nota', 'ganha pontos extras', 'só perde pontos de ortografia'], ans: 'A', exp: 'A Competência 5 recebe zero; as outras são corrigidas normalmente.' },
+      { id: 'RED-EM-09', deck: 'RED-EM', area: 'Redação · Repertório', q: 'Qual estrutura forma um bom parágrafo de desenvolvimento?', opts: ['apenas uma citação longa', 'uma história pessoal', 'uma sequência de perguntas', 'tópico frasal, fundamentação com repertório e fechamento ligado à tese'], ans: 'D', exp: 'Apresenta a ideia, comprova e conecta à tese.' },
+      { id: 'RED-EM-10', deck: 'RED-EM', area: 'Redação · Competências', q: 'O que uma boa conclusão deve fazer?', opts: ['apresentar um argumento novo', 'contar uma história pessoal', 'retomar a tese e apresentar a proposta de intervenção', 'copiar a introdução'], ans: 'C', exp: 'A conclusão fecha o raciocínio e propõe a solução.' },
+    ];
+
+    /**
+     * 2. BARALHO DE DESAFIO E MOVIMENTO (20 CARTAS)
+     */
+    const CHALLENGE_CARDS_DB = [
+      { id: 'DES-01', deck: 'DES', area: 'Repertório Sociocultural (+8 pts)', q: 'Você citou a Constituição Federal de 1988 de forma produtiva no debate! Ganhe +8 pontos de Repertório (não concede marcador de redação).', exp: 'Carta de Repertório: +8 pontos imediatos (sem marcador).' },
+      { id: 'DES-02', deck: 'DES', area: 'Repertório Sociocultural (+8 pts)', q: 'Você relacionou o conceito de "Modernidade Líquida" de Zygmunt Bauman ao tema atual! Ganhe +8 pontos de Repertório (sem marcador).', exp: 'Carta de Repertório: +8 pontos imediatos (sem marcador).' },
+      { id: 'DES-03', deck: 'DES', area: 'Repertório Sociocultural (+8 pts)', q: 'Você mencionou a obra "Vidas Secas", de Graciliano Ramos, para contextualizar a desigualdade regional! Ganhe +8 pontos de Repertório (sem marcador).', exp: 'Carta de Repertório: +8 pontos imediatos (sem marcador).' },
+      { id: 'DES-04', deck: 'DES', area: 'Repertório Sociocultural (+8 pts)', q: 'Você trouxe dados estatísticos atualizados do IBGE para sustentar seu argumento! Ganhe +8 pontos de Repertório (sem marcador).', exp: 'Carta de Repertório: +8 pontos imediatos (sem marcador).' },
+      { id: 'DES-05', deck: 'DES', area: 'Repertório Sociocultural (+8 pts)', q: 'Você conectou a "banalidade do mal" de Hannah Arendt à discussão em mesa! Ganhe +8 pontos de Repertório (sem marcador).', exp: 'Carta de Repertório: +8 pontos imediatos (sem marcador).' },
+      { id: 'DES-06', deck: 'DES', area: 'Movimento · Avanço', q: 'Você entregou a lista de exercícios antes do prazo! Avance 2 casas no percurso.', exp: 'Avance 2 passos no tabuleiro.' },
+      { id: 'DES-07', deck: 'DES', area: 'Movimento · Avanço', q: 'Simulado dominical com excelente desempenho! Avance 3 casas no percurso.', exp: 'Avance 3 passos no tabuleiro.' },
+      { id: 'DES-08', deck: 'DES', area: 'Movimento · Avanço', q: 'Revisão relâmpago antes da aula! Avance 1 casa e realize a ação dela.', exp: 'Avance 1 passo no tabuleiro.' },
+      { id: 'DES-09', deck: 'DES', area: 'Movimento · Avanço', q: 'Grupo de estudos produtivo na biblioteca! Avance 4 casas no percurso.', exp: 'Avance 4 passos no tabuleiro.' },
+      { id: 'DES-10', deck: 'DES', area: 'Movimento · Recuo', q: 'Esqueceu de marcar o gabarito no cartão-resposta! Volte 2 casas.', exp: 'Recue 2 passos no tabuleiro.' },
+      { id: 'DES-11', deck: 'DES', area: 'Movimento · Recuo', q: 'Passou a madrugada maratonando séries em véspera de prova! Volte 3 casas.', exp: 'Recue 3 passos no tabuleiro.' },
+      { id: 'DES-12', deck: 'DES', area: 'Movimento · Recuo', q: 'Tangenciou o tema do simulado de redação! Volte 1 casa.', exp: 'Recue 1 passo no tabuleiro.' },
+      { id: 'DES-13', deck: 'DES', area: 'Movimento · Recuo', q: 'Bateria do celular acabou no meio da videoaula! Volte 2 casas.', exp: 'Recue 2 passos no tabuleiro.' },
+      { id: 'DES-14', deck: 'DES', area: 'Turno Extra', q: 'Foco total nos estudos! Jogue o dado novamente após concluir este turno.', exp: 'Concede uma jogada extra imediata.' },
+      { id: 'DES-15', deck: 'DES', area: 'Turno Extra', q: 'Mapa mental impecável! Role o dado novamente e avance mais uma vez.', exp: 'Concede uma jogada extra imediata.' },
+      { id: 'DES-16', deck: 'DES', area: 'Perda de Vez', q: 'Trânsito intenso no caminho para o local de prova! Perca a próxima vez.', exp: 'Fique 1 rodada sem jogar.' },
+      { id: 'DES-17', deck: 'DES', area: 'Perda de Vez', q: 'Bloqueio criativo na hora de montar a proposta de intervenção! Perca a próxima vez.', exp: 'Fique 1 rodada sem jogar.' },
+      { id: 'DES-18', deck: 'DES', area: 'Troca de Posição', q: 'Intercâmbio acadêmico! Troque a posição do seu peão com o jogador imediatamente à sua frente.', exp: 'Permute posição no tabuleiro com o jogador à frente.' },
+      { id: 'DES-19', deck: 'DES', area: 'Atalho Estratégico', q: 'Conexão sináptica acelerada! Avance diretamente até a próxima casa de Redação.', exp: 'Mova o peão até a casa de Redação mais próxima à frente.' },
+      { id: 'DES-20', deck: 'DES', area: 'Bônus & Movimento', q: 'Ajudou um colega a revisar fórmulas de Física! Ganhe +3 pontos e avance 1 casa.', exp: '+3 pontos e +1 passo no tabuleiro.' },
+    ];
+
+    /**
+     * 3. CONFIGURAÇÃO DOS 18 BARALHOS E SEÇÕES
+     */
+    const SUBJECT_COLORS = {
+      'Matemática': { color: '#E34D64', textDark: false },
+      'Natureza': { color: '#A5D39E', textDark: true },
+      'Linguagens': { color: '#008CC3', textDark: false },
+      'Humanas': { color: '#F3AE7A', textDark: true },
+    };
+
+    const DECK_DEFINITIONS = [
+      // Perguntas (108) — Roxo #723977
+      { code: 'ALF', label: 'Alfabetização · Fácil', group: 'PERGUNTAS', color: '#723977', icon: '/assets/icons/casa_pergunta.png', badge: '+15 pts' },
+      { code: 'F1F', label: 'Fund. I · Fácil', group: 'PERGUNTAS', color: '#723977', icon: '/assets/icons/casa_pergunta.png', badge: '+15 pts' },
+      { code: 'F1M', label: 'Fund. I · Média', group: 'PERGUNTAS', color: '#723977', icon: '/assets/icons/casa_pergunta.png', badge: '+10 pts' },
+      { code: 'F2F', label: 'Fund. II · Fácil', group: 'PERGUNTAS', color: '#723977', icon: '/assets/icons/casa_pergunta.png', badge: '+15 pts' },
+      { code: 'F2M', label: 'Fund. II · Média', group: 'PERGUNTAS', color: '#723977', icon: '/assets/icons/casa_pergunta.png', badge: '+10 pts' },
+      { code: 'F2D', label: 'Fund. II · Difícil', group: 'PERGUNTAS', color: '#723977', icon: '/assets/icons/casa_pergunta.png', badge: '+5 pts' },
+      { code: 'EMF', label: 'Ens. Médio · Fácil', group: 'PERGUNTAS', color: '#723977', icon: '/assets/icons/casa_pergunta.png', badge: '+15 pts' },
+      { code: 'EMM', label: 'Ens. Médio · Média', group: 'PERGUNTAS', color: '#723977', icon: '/assets/icons/casa_pergunta.png', badge: '+10 pts' },
+      { code: 'EMD', label: 'Ens. Médio · Difícil', group: 'PERGUNTAS', color: '#723977', icon: '/assets/icons/casa_pergunta.png', badge: '+5 pts' },
+      // Redação (40) — Vermelho-rosé #E5616D
+      { code: 'RED-ALF', label: 'Redação · Alfabetização', group: 'REDACAO', color: '#E5616D', icon: '/assets/icons/casa_redacao.png', badge: '+10 + Marc.' },
+      { code: 'RED-F1', label: 'Redação · Fund. I', group: 'REDACAO', color: '#E5616D', icon: '/assets/icons/casa_redacao.png', badge: '+10 + Marc.' },
+      { code: 'RED-F2', label: 'Redação · Fund. II', group: 'REDACAO', color: '#E5616D', icon: '/assets/icons/casa_redacao.png', badge: '+10 + Marc.' },
+      { code: 'RED-EM', label: 'Redação · Ens. Médio', group: 'REDACAO', color: '#E5616D', icon: '/assets/icons/casa_redacao.png', badge: '+10 + Marc.' },
+      // Universidade (#ADDBDA) & Troca de Conhecimento / Disputa (#66403B) (48)
+      { code: 'UNI-A', label: 'Univ. · Acessível', group: 'UNI_DSP', color: '#ADDBDA', textDark: true, icon: '/assets/icons/casa_universidade.png', badge: 'Conquista Fácil' },
+      { code: 'UNI-M', label: 'Univ. · Média', group: 'UNI_DSP', color: '#ADDBDA', textDark: true, icon: '/assets/icons/casa_universidade.png', badge: 'Conquista Média' },
+      { code: 'UNI-D', label: 'Univ. · Alta Concorrência', group: 'UNI_DSP', color: '#ADDBDA', textDark: true, icon: '/assets/icons/casa_universidade.png', badge: 'Conquista Difícil' },
+      { code: 'DSP', label: 'Troca de Conhecimento · Disputa', group: 'UNI_DSP', color: '#66403B', icon: '/assets/icons/casa_troca.png', badge: 'Tomada de Vaga' },
+      // Desafio e Movimento (20) — Azul escuro #3D3F7B
+      { code: 'DES', label: 'Desafio e Movimento', group: 'DESAFIO', color: '#3D3F7B', icon: '/assets/icons/casa_troca.png', badge: 'Ação / +8 Rep.' },
+    ];
+
+    const DECK_SECTIONS = [
+      { group: 'PERGUNTAS', title: 'Casas de Pergunta (Por Fase Escolar e Nível)' },
+      { group: 'REDACAO', title: 'Casas de Redação (Por Fase Escolar)' },
+      { group: 'UNI_DSP', title: 'Casas de Universidade & Troca de Conhecimento' },
+      { group: 'DESAFIO', title: 'Casas de Desafio e Movimento' },
+    ];
+
+    const REDACAO_MARKERS = [
+      { id: 'CONECTIVOS', label: 'Conectivos', color: '#E5616D', desc: 'Coesão e articulação entre ideias e parágrafos (+10 pts).' },
+      { id: 'COMPETENCIAS', label: 'Competências', color: '#C94754', desc: 'Estrutura dissertativa, norma-padrão e proposta de intervenção (+10 pts).' },
+      { id: 'REPERTORIO', label: 'Repertório', color: '#A83240', desc: 'Fundamentação sociocultural produtiva para defender a tese (+10 pts).' },
+    ];
+
+    const MOBILE_HOUSE_CATEGORIES = [
+      {
+        key: 'PERGUNTAS',
+        title: 'PERGUNTAS',
+        color: '#723977',
+        icon: '/assets/icons/casa_pergunta.png',
+        decks: ['ALF', 'F1F', 'F1M', 'F2F', 'F2M', 'F2D', 'EMF', 'EMM', 'EMD'],
+        thumbs: [
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-2-copy-copy-2_6f7aa7e6.jpg',
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-3-copy_939c4177.jpg',
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-2-copy-copy-2-copy_3d55afe1.jpg',
+        ],
+      },
+      {
+        key: 'UNIVERSIDADE',
+        title: 'UNIVERSIDADE',
+        color: '#ADDBDA',
+        icon: '/assets/icons/casa_universidade.png',
+        iconShadow: true,
+        textShadow: true,
+        decks: ['UNI-A', 'UNI-M', 'UNI-D'],
+        thumbs: [
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-copy_ec207e67.jpg',
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-2-copy-copy-2_6f7aa7e6.jpg',
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-3-copy_939c4177.jpg',
+        ],
+      },
+      {
+        key: 'REDACAO',
+        title: 'REDAÇÃO',
+        color: '#E5616D',
+        icon: '/assets/icons/casa_redacao.png',
+        decks: ['RED-ALF', 'RED-F1', 'RED-F2', 'RED-EM'],
+        thumbs: [
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-copy-copy-copy_6a887557.jpg',
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-2-copy-copy-2-copy-copy_2cdd5528.jpg',
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-copy-copy-copy_6a887557.jpg',
+        ],
+      },
+      {
+        key: 'TROCA',
+        title: 'TROCA DE CONHECIMENTO (DISPUTA)',
+        color: '#66403B',
+        icon: '/assets/icons/casa_troca.png',
+        compactTitle: true,
+        decks: ['DSP'],
+        thumbs: [
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-copy_ec207e67.jpg',
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-2-copy-copy-2-copy_3d55afe1.jpg',
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-3-copy_939c4177.jpg',
+        ],
+      },
+      {
+        key: 'DESAFIO',
+        title: 'DESAFIO E MOVIMENTO',
+        color: '#3D3F7B',
+        icon: '/assets/icons/casa_troca.png',
+        compactTitle: true,
+        decks: ['DES'],
+        thumbs: [
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-copy-copy_49f63c2f.jpg',
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-3-copy_939c4177.jpg',
+          '/assets/aistudio/cartas_cabecao-Artboard-1-copy-copy-copy_49f63c2f.jpg',
+        ],
+      },
+    ];
+
+    /**
+     * 4. ESTADO DO SORTEADOR E PERSISTÊNCIA EM LOCALSTORAGE
+     */
+    const STORAGE_KEY = 'cabecao_sorteador_cartas_v1';
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function createInitialState() {
+      const decks = {};
+      DECK_DEFINITIONS.forEach(d => {
+        const ids = d.code === 'DES'
+          ? CHALLENGE_CARDS_DB.map(c => c.id)
+          : OFFICIAL_CARDS_DB.filter(c => c.deck === d.code).map(c => c.id);
+        decks[d.code] = {
+          draw: shuffleArray(ids),
+          discard: []
+        };
+      });
+
+      return {
+        deckTab: 'ALL',
+        decks
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.decks) {
+            DECK_DEFINITIONS.forEach(d => {
+              if (!parsed.decks[d.code]) {
+                const ids = d.code === 'DES'
+                  ? CHALLENGE_CARDS_DB.map(c => c.id)
+                  : OFFICIAL_CARDS_DB.filter(c => c.deck === d.code).map(c => c.id);
+                parsed.decks[d.code] = { draw: shuffleArray(ids), discard: [] };
+              }
+            });
+            if (!parsed.deckTab) parsed.deckTab = 'ALL';
+            return parsed;
+          }
+        }
+      } catch (e) {
+        // Ignora erro de acesso ao localStorage
+      }
+      return createInitialState();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        // Ignora erro de quota ou modo privado
+      }
+    }
+
+    let state = loadState();
+    let currentDrawnCard = null;
+    let selectedOptionIndex = null;
+    let isSpinningCompetency = false;
+
+    /**
+     * 5. NAVEGAÇÃO POR ABAS & RENDERIZAÇÃO DOS BARALHOS
+     */
+    function filterDeckTab(tab) {
+      state.deckTab = tab;
+      document.querySelectorAll('.deck-tab-btn').forEach(btn => {
+        if (btn.dataset.decktab === tab) {
+          btn.className = 'deck-tab-btn px-3 py-1.5 rounded-xl text-xs font-extrabold bg-cabecao-navy text-white transition';
+        } else {
+          btn.className = 'deck-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+        }
+      });
+      renderDeckSections();
+      saveState();
+    }
+
+    function renderDeckSections() {
+      const container = document.getElementById('decksSectionsContainer');
+      if (!container) return;
+
+      // Atualizar contador global de cartas disponíveis (216 únicas)
+      let totalAvailable = 0;
+      let totalCards = 0;
+      DECK_DEFINITIONS.forEach(d => {
+        const pile = state.decks[d.code] || { draw: [], discard: [] };
+        totalAvailable += pile.draw.length;
+        totalCards += pile.draw.length + pile.discard.length;
+      });
+      const badge = document.getElementById('globalCounterBadge');
+      if (badge) {
+        badge.textContent = `${totalAvailable} de ${totalCards} cartas disponíveis`;
+      }
+      const mobileBadge = document.getElementById('mobileCounterBadge');
+      if (mobileBadge) {
+        mobileBadge.textContent = `${totalAvailable} disponíveis`;
+      }
+
+      renderMobileHouses();
+
+      const visibleSections = state.deckTab === 'ALL'
+        ? DECK_SECTIONS
+        : DECK_SECTIONS.filter(s => s.group === state.deckTab);
+
+      container.innerHTML = visibleSections.map(sec => {
+        const decksInSec = DECK_DEFINITIONS.filter(d => d.group === sec.group);
+
+        const cardsHtml = decksInSec.map(d => {
+          const pile = state.decks[d.code] || { draw: [], discard: [] };
+          const total = pile.draw.length + pile.discard.length;
+          const textColor = d.textDark ? 'text-slate-950' : 'text-white';
+          const codeChipClass = d.textDark ? 'bg-slate-900/10 text-slate-950' : 'bg-black/20 text-white';
+          const countChipClass = d.textDark ? 'bg-white/60 text-slate-950' : 'bg-white/25 text-white';
+          const iconToneClass = d.textDark ? 'opacity-[0.18]' : 'invert opacity-[0.20]';
+
+          return `
+            <div class="group rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col bg-white">
+              <button onclick="drawCardFromDeck('${d.code}')" style="background-color: ${d.color};"
+                      class="relative overflow-hidden p-3.5 text-left ${textColor} flex flex-col justify-between min-h-[104px] hover:opacity-95 active:scale-[0.99] transition cursor-pointer">
+                ${d.icon ? `<img src="${d.icon}" alt="" aria-hidden="true" referrerpolicy="no-referrer" class="pointer-events-none select-none absolute -right-1.5 -bottom-1.5 w-20 h-20 object-contain ${iconToneClass} transition-transform duration-200 group-hover:scale-105" />` : ''}
+                <div class="relative z-10 flex items-center justify-between gap-1.5 w-full">
+                  <span class="font-mono text-xs font-black tracking-tight px-2 py-0.5 rounded-lg ${codeChipClass}">${d.code}</span>
+                  <span class="text-[11px] font-extrabold px-2 py-0.5 rounded-lg ${countChipClass}">${pile.draw.length}/${total}</span>
+                </div>
+                <div class="relative z-10 mt-3 pr-8">
+                  <div class="font-display font-normal text-base sm:text-lg tracking-wide leading-tight">${d.label}</div>
+                  <div class="text-[11px] opacity-90 font-semibold mt-0.5">${d.badge}</div>
+                </div>
+              </button>
+              <div class="px-3 py-1.5 bg-slate-50 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100">
+                <span>Descarte: <strong>${pile.discard.length}</strong></span>
+                <button onclick="reshuffleDeck('${d.code}')" class="text-cabecao-navy hover:underline font-bold">Reembaralhar</button>
+              </div>
+            </div>`;
+        }).join('');
+
+        // Bloco de sorteio rápido das 3 competências na seção Redação
+        let extraRedacaoHtml = '';
+        if (sec.group === 'REDACAO') {
+          extraRedacaoHtml = `
+            <div class="rounded-2xl bg-rose-50/70 border border-rose-200 p-3.5 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="h-[34px] overflow-hidden hidden sm:flex items-center shrink-0">
+                  <img src="/assets/aistudio/LOGO_HORIZONTAL_CABECAO_SALMAO_0723a14b.png" alt="CABEÇÃO" referrerpolicy="no-referrer" class="h-[54px] w-auto max-w-none object-contain" />
+                </div>
+                <div class="font-display font-normal text-base sm:text-lg tracking-wide text-cabecao-navy">Acertou a carta de Redação? Sorteie sua Competência!</div>
+              </div>
+              <button onclick="openStandaloneCompetencyModal()" class="px-4 py-2.5 rounded-xl bg-cabecao-redacao hover:opacity-95 text-white text-xs font-extrabold shadow-sm transition active:scale-[0.98] shrink-0">
+                🎲 Sortear Competência (1 de 3)
+              </button>
+            </div>`;
+        }
+
+        return `
+          <section class="space-y-2.5">
+            <div>
+              <h2 class="font-display font-normal text-xl sm:text-2xl tracking-wide text-cabecao-navy">${sec.title}</h2>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              ${cardsHtml}
+            </div>
+            ${extraRedacaoHtml}
+          </section>`;
+      }).join('');
+    }
+
+    function renderMobileHouses() {
+      const mobileContainer = document.getElementById('mobileHousesContainer');
+      if (!mobileContainer) return;
+
+      mobileContainer.innerHTML = MOBILE_HOUSE_CATEGORIES.map(cat => {
+        const titleSizeClass = cat.compactTitle ? 'text-[20px] leading-[1.12]' : 'text-[25px] leading-[1.08]';
+        const titleShadowClass = cat.textShadow ? 'drop-shadow-[0_1px_2px_rgba(15,23,42,0.35)]' : '';
+        const iconShadowClass = cat.iconShadow ? 'drop-shadow-[0_1px_1px_rgba(15,23,42,0.22)]' : '';
+
+        return `
+          <button
+            type="button"
+            onclick="drawRandomCardFromCategory('${cat.key}')"
+            class="group relative w-full pt-5 pb-2 text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cabecao-navy"
+          >
+            <div
+              style="background-color: ${cat.color};"
+              class="relative rounded-[26px] px-3.5 py-3 min-h-[104px] flex items-center gap-3.5 shadow-md transition-transform duration-150 group-active:scale-[0.985]"
+            >
+              <!-- Marca-d'água sutil do ícone no fundo do card -->
+              <img
+                src="${cat.icon}"
+                alt=""
+                aria-hidden="true"
+                referrerpolicy="no-referrer"
+                class="pointer-events-none select-none absolute left-[88px] top-1/2 -translate-y-1/2 w-24 h-24 object-contain invert opacity-[0.12]"
+              />
+
+              <!-- Pasta branca à esquerda com 3 miniaturas das cartas originais saindo por cima -->
+              <div class="relative w-[108px] h-[86px] shrink-0 -mt-3">
+                <!-- Fundo da pasta branca (com aba superior esquerda) -->
+                <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 112 90" fill="none" aria-hidden="true">
+                  <path d="M6 16C6 10.4772 10.4772 6 16 6H40.5C44.2 6 47.4 8.1 49.1 11.4L51.4 15.8C52.4 17.7 54.4 19 56.6 19H98C103.523 19 108 23.4772 108 29V76C108 81.5228 103.523 86 98 86H16C10.4772 86 6 81.5228 6 76V16Z"
+                        fill="#E5E9F2" stroke="#CBD5E1" stroke-width="1.5" />
+                </svg>
+
+                <!-- 3 Miniaturas das cartas originais dentro da pasta -->
+                <img
+                  src="${cat.thumbs[0]}"
+                  alt=""
+                  aria-hidden="true"
+                  referrerpolicy="no-referrer"
+                  class="pointer-events-none select-none absolute left-[9px] -top-[14px] w-[37px] h-[53px] rounded-[5px] object-cover object-top bg-white border border-slate-300 shadow-sm -rotate-[13deg] z-[1] transition-transform duration-200 group-hover:-translate-y-1"
+                />
+                <img
+                  src="${cat.thumbs[1]}"
+                  alt=""
+                  aria-hidden="true"
+                  referrerpolicy="no-referrer"
+                  class="pointer-events-none select-none absolute left-[36px] -top-[21px] w-[39px] h-[55px] rounded-[5px] object-cover object-top bg-white border border-slate-300 shadow-md -rotate-[1deg] z-[3] transition-transform duration-200 group-hover:-translate-y-1.5"
+                />
+                <img
+                  src="${cat.thumbs[2]}"
+                  alt=""
+                  aria-hidden="true"
+                  referrerpolicy="no-referrer"
+                  class="pointer-events-none select-none absolute right-[8px] -top-[13px] w-[37px] h-[53px] rounded-[5px] object-cover object-top bg-white border border-slate-300 shadow-sm rotate-[12deg] z-[2] transition-transform duration-200 group-hover:-translate-y-1"
+                />
+
+                <!-- Bolso frontal branco da pasta -->
+                <svg class="absolute inset-0 w-full h-full pointer-events-none z-[4] drop-shadow-[0_3px_6px_rgba(15,23,42,0.16)]" viewBox="0 0 112 90" fill="none" aria-hidden="true">
+                  <path d="M4 27C4 22.0294 8.02944 18 13 18H43.5C47.3 18 50.6 20.4 51.9 23.9L53.2 27.4C54.3 30.2 57 32 60 32H99C103.971 32 108 36.0294 108 41V75C108 81.0751 103.075 86 97 86H15C8.92487 86 4 81.0751 4 75V27Z"
+                        fill="#FFFFFF" stroke="rgba(15,23,42,0.08)" stroke-width="1.2" />
+                </svg>
+
+                <!-- Ícone da respectiva casa na cor exata da casa no centro da pasta branca -->
+                <div class="absolute inset-x-0 bottom-[10px] h-[46px] z-[5] flex items-center justify-center pointer-events-none">
+                  <span
+                    style="background-color: ${cat.color}; -webkit-mask-image: url('${cat.icon}'); mask-image: url('${cat.icon}'); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;"
+                    class="block w-10 h-10 ${iconShadowClass}"
+                  ></span>
+                </div>
+              </div>
+
+              <!-- Título da casa em Bubblegum Sans Regular branco -->
+              <div class="relative z-10 flex-1 pr-7">
+                <div class="font-display font-normal ${titleSizeClass} tracking-wide text-white ${titleShadowClass}">
+                  ${cat.title}
+                </div>
+              </div>
+
+              <!-- Selo circular inferior direito com o ícone da casa -->
+              <span
+                style="border-color: ${cat.color};"
+                class="absolute -bottom-2.5 right-3 z-20 w-10 h-10 rounded-full bg-white border-2 shadow-md flex items-center justify-center pointer-events-none"
+              >
+                <span
+                  style="background-color: ${cat.color}; -webkit-mask-image: url('${cat.icon}'); mask-image: url('${cat.icon}'); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;"
+                  class="block w-5 h-5 ${iconShadowClass}"
+                ></span>
+              </span>
+            </div>
+          </button>`;
+      }).join('');
+    }
+
+    /**
+     * 6. FUNÇÕES DE EMBARALHAMENTO, SORTEIO DE CARTAS E SORTEIO DE COMPETÊNCIA
+     */
+    function reshuffleDeck(deckCode, silent = false) {
+      const pile = state.decks[deckCode];
+      if (!pile) return;
+      pile.draw = shuffleArray([...pile.draw, ...pile.discard]);
+      pile.discard = [];
+      renderDeckSections();
+      saveState();
+      if (!silent) {
+        showToast(`Pilha ${deckCode} reembaralhada (${pile.draw.length} cartas)!`, 'info');
+      }
+    }
+
+    function resetAllDecks() {
+      state = createInitialState();
+      saveState();
+      closeModal('modalConfirmReset');
+      filterDeckTab(state.deckTab);
+      showToast('Todas as 216 cartas foram devolvidas e embaralhadas!', 'success');
+    }
+
+    function drawRandomCardFromCategory(categoryKey) {
+      const cat = MOBILE_HOUSE_CATEGORIES.find(c => c.key === categoryKey);
+      if (!cat) return;
+
+      let pool = [];
+      cat.decks.forEach(deckCode => {
+        const pile = state.decks[deckCode];
+        if (pile && pile.draw.length > 0) {
+          pile.draw.forEach(cardId => pool.push({ deckCode, cardId }));
+        }
+      });
+
+      if (pool.length === 0) {
+        cat.decks.forEach(deckCode => {
+          const pile = state.decks[deckCode];
+          if (pile) {
+            pile.draw = shuffleArray([...pile.draw, ...pile.discard]);
+            pile.discard = [];
+            pile.draw.forEach(cardId => pool.push({ deckCode, cardId }));
+          }
+        });
+        showToast(`Cartas de ${cat.title} reembaralhadas automaticamente!`, 'warn');
+      }
+
+      if (pool.length === 0) return;
+
+      const picked = pool[Math.floor(Math.random() * pool.length)];
+      const pile = state.decks[picked.deckCode];
+      const deckDef = DECK_DEFINITIONS.find(d => d.code === picked.deckCode);
+      if (!pile || !deckDef) return;
+
+      const idxInDraw = pile.draw.indexOf(picked.cardId);
+      if (idxInDraw !== -1) {
+        pile.draw.splice(idxInDraw, 1);
+      }
+      pile.discard.push(picked.cardId);
+      renderDeckSections();
+      saveState();
+
+      const cardObj = picked.deckCode === 'DES'
+        ? CHALLENGE_CARDS_DB.find(c => c.id === picked.cardId)
+        : OFFICIAL_CARDS_DB.find(c => c.id === picked.cardId);
+
+      if (!cardObj) return;
+
+      presentDrawnCardModal(cardObj, deckDef, categoryKey);
+    }
+
+    function drawCardFromDeck(deckCode) {
+      const pile = state.decks[deckCode];
+      const deckDef = DECK_DEFINITIONS.find(d => d.code === deckCode);
+      if (!pile || !deckDef) return;
+
+      if (pile.draw.length === 0) {
+        reshuffleDeck(deckCode, true);
+        showToast(`Pilha ${deckCode} acabou — reembaralhada automaticamente!`, 'warn');
+      }
+
+      const cardId = pile.draw.shift();
+      pile.discard.push(cardId);
+      renderDeckSections();
+      saveState();
+
+      const cardObj = deckCode === 'DES'
+        ? CHALLENGE_CARDS_DB.find(c => c.id === cardId)
+        : OFFICIAL_CARDS_DB.find(c => c.id === cardId);
+
+      if (!cardObj) return;
+
+      presentDrawnCardModal(cardObj, deckDef, null);
+    }
+
+    function presentDrawnCardModal(cardObj, deckDef, mobileCategoryKey = null) {
+      currentDrawnCard = { card: cardObj, deckDef, mobileCategoryKey };
+      selectedOptionIndex = null;
+
+      // Estilizar cabeçalho do modal conforme a cor da matéria (ou da casa para Redação/Movimento)
+      const subjectStyle = SUBJECT_COLORS[cardObj.area];
+      const headerColor = subjectStyle ? subjectStyle.color : deckDef.color;
+      const isHeaderDarkText = subjectStyle ? subjectStyle.textDark : Boolean(deckDef.textDark);
+
+      const header = document.getElementById('cardModalHeader');
+      header.style.backgroundColor = headerColor;
+      header.className = `px-5 py-4 flex items-center justify-between ${isHeaderDarkText ? 'text-slate-950' : 'text-white'}`;
+
+      const codeEl = document.getElementById('cardModalCode');
+      codeEl.className = `px-2.5 py-0.5 rounded-lg font-mono text-xs font-extrabold tracking-wide ${isHeaderDarkText ? 'bg-slate-900/12 text-slate-950' : 'bg-black/25 text-white'}`;
+
+      const closeBtn = document.getElementById('cardModalCloseBtn');
+      if (closeBtn) {
+        closeBtn.className = `w-9 h-9 rounded-full flex items-center justify-center font-bold transition ${isHeaderDarkText ? 'bg-slate-900/10 hover:bg-slate-900/20 text-slate-950' : 'bg-black/20 hover:bg-black/35 text-white'}`;
+      }
+
+      codeEl.textContent = cardObj.id;
+      document.getElementById('cardModalDeckName').textContent = deckDef.label;
+      document.getElementById('cardModalArea').textContent = cardObj.area;
+      document.getElementById('cardModalQuestion').textContent = cardObj.q;
+
+      const optsContainer = document.getElementById('cardModalOptions');
+      const challengeBox = document.getElementById('cardModalChallengeBox');
+      const spoilerSec = document.getElementById('fiscalSpoilerSection');
+      const redacaoRewardSec = document.getElementById('redacaoRewardSection');
+
+      // Resetar estado oculto do gabarito (anti-spoiler) e do sorteio de competência
+      document.getElementById('btnRevealFiscal').classList.remove('hidden');
+      document.getElementById('fiscalAnswerBox').classList.add('hidden');
+      document.getElementById('btnSpinCardCompetency').classList.remove('hidden');
+      document.getElementById('cardCompetencyWheelBox').classList.add('hidden');
+      document.getElementById('cardCompetencyResultBanner').classList.add('hidden');
+
+      if (deckDef.code === 'DES') {
+        optsContainer.innerHTML = '';
+        challengeBox.classList.remove('hidden');
+        spoilerSec.classList.add('hidden');
+        redacaoRewardSec.classList.add('hidden');
+        document.getElementById('cardModalChallengeEffect').textContent = cardObj.exp || cardObj.q;
+      } else {
+        challengeBox.classList.add('hidden');
+        spoilerSec.classList.remove('hidden');
+
+        if (deckDef.group === 'REDACAO') {
+          redacaoRewardSec.classList.remove('hidden');
+          renderCompetencySlots('card', -1, false);
+        } else {
+          redacaoRewardSec.classList.add('hidden');
+        }
+
+        const letters = ['A', 'B', 'C', 'D'];
+        optsContainer.innerHTML = cardObj.opts.map((optText, i) => `
+          <button onclick="selectCardOption(${i})" data-opt-idx="${i}"
+                  class="card-opt-btn w-full text-left p-3.5 rounded-2xl border-2 border-slate-200 hover:border-cabecao-purple bg-white transition flex items-start gap-3 cursor-pointer">
+            <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-800 font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">${letters[i]}</span>
+            <span class="text-xs sm:text-sm font-semibold text-slate-800 leading-snug">${optText}</span>
+          </button>
+        `).join('');
+
+        document.getElementById('fiscalCorrectLetterBadge').textContent = `Resposta: ${cardObj.ans}`;
+        document.getElementById('fiscalExplanationText').textContent = cardObj.exp;
+      }
+
+      openModal('modalCardDraw');
+    }
+
+    function openStandaloneCompetencyModal() {
+      document.getElementById('standaloneCompetencyResultBanner').classList.add('hidden');
+      renderCompetencySlots('standalone', -1, false);
+      openModal('modalCompetencyDraw');
+    }
+
+    function renderCompetencySlots(prefix, activeIdx, isFinalWinner) {
+      const containerId = prefix === 'card' ? 'cardCompetencySlots' : 'standaloneCompetencySlots';
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      container.innerHTML = REDACAO_MARKERS.map((m, idx) => {
+        const isHighlighted = idx === activeIdx;
+        if (isHighlighted && isFinalWinner) {
+          return `
+            <div style="background-color: ${m.color};"
+                 class="winner-pop rounded-xl p-2.5 text-center text-white font-extrabold text-xs shadow-md border-2 border-amber-300">
+              <div class="text-[10px] uppercase tracking-wider text-amber-200">Ganhou!</div>
+              <div class="mt-0.5">${m.label}</div>
+            </div>`;
+        }
+        if (isHighlighted) {
+          return `
+            <div style="background-color: ${m.color};"
+                 class="rounded-xl p-2.5 text-center text-white font-extrabold text-xs shadow transition">
+              <div class="text-[10px] opacity-80">Sorteando...</div>
+              <div class="mt-0.5">${m.label}</div>
+            </div>`;
+        }
+        return `
+          <div class="rounded-xl p-2.5 text-center bg-white border border-slate-200 text-slate-500 font-bold text-xs transition ${isFinalWinner ? 'opacity-45' : ''}">
+            <div class="text-[10px] text-slate-400">Marcador</div>
+            <div class="mt-0.5">${m.label}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function triggerCompetencySpin(prefix) {
+      if (isSpinningCompetency) return;
+      isSpinningCompetency = true;
+
+      if (prefix === 'card') {
+        document.getElementById('btnSpinCardCompetency').classList.add('hidden');
+        document.getElementById('cardCompetencyWheelBox').classList.remove('hidden');
+        document.getElementById('cardCompetencyResultBanner').classList.add('hidden');
+      } else {
+        document.getElementById('standaloneCompetencyResultBanner').classList.add('hidden');
+      }
+
+      const winnerIdx = Math.floor(Math.random() * REDACAO_MARKERS.length);
+      const totalTicks = 9 + winnerIdx; // Para exatamente em winnerIdx após 3 ciclos
+      let tick = 0;
+
+      const interval = setInterval(() => {
+        const currentIdx = tick % REDACAO_MARKERS.length;
+        const isLast = tick === totalTicks;
+        renderCompetencySlots(prefix, currentIdx, isLast);
+
+        if (isLast) {
+          clearInterval(interval);
+          isSpinningCompetency = false;
+          const winner = REDACAO_MARKERS[winnerIdx];
+          const bannerId = prefix === 'card' ? 'cardCompetencyResultBanner' : 'standaloneCompetencyResultBanner';
+          const banner = document.getElementById(bannerId);
+          banner.classList.remove('hidden');
+          banner.innerHTML = `
+            <div class="text-xs sm:text-sm font-black text-cabecao-navy">
+              Você conquistou: <span style="color: ${winner.color};">${winner.label.toUpperCase()}</span> (+10 pts)!
+            </div>
+            <div class="text-[11px] text-slate-600 mt-0.5">${winner.desc}</div>
+          `;
+        }
+        tick += 1;
+      }, 75);
+    }
+
+    function selectCardOption(idx) {
+      selectedOptionIndex = idx;
+      document.querySelectorAll('.card-opt-btn').forEach((btn, i) => {
+        if (i === idx) {
+          btn.className = 'card-opt-btn w-full text-left p-3.5 rounded-2xl border-2 border-cabecao-purple bg-purple-50 transition flex items-start gap-3 cursor-pointer';
+        } else {
+          btn.className = 'card-opt-btn w-full text-left p-3.5 rounded-2xl border-2 border-slate-200 hover:border-cabecao-purple bg-white transition flex items-start gap-3 cursor-pointer';
+        }
+      });
+    }
+
+    function revealFiscalAnswer() {
+      if (!currentDrawnCard || !currentDrawnCard.card) return;
+      document.getElementById('btnRevealFiscal').classList.add('hidden');
+      document.getElementById('fiscalAnswerBox').classList.remove('hidden');
+
+      const letters = ['A', 'B', 'C', 'D'];
+      const correctIdx = letters.indexOf(currentDrawnCard.card.ans);
+      document.querySelectorAll('.card-opt-btn').forEach((btn, i) => {
+        if (i === correctIdx) {
+          btn.className = 'card-opt-btn w-full text-left p-3.5 rounded-2xl border-2 border-emerald-600 bg-emerald-50 transition flex items-start gap-3 cursor-pointer';
+        } else if (i === selectedOptionIndex && i !== correctIdx) {
+          btn.className = 'card-opt-btn w-full text-left p-3.5 rounded-2xl border-2 border-red-500 bg-red-50 transition flex items-start gap-3 cursor-pointer';
+        }
+      });
+    }
+
+    function drawAgainSameDeck() {
+      if (!currentDrawnCard || !currentDrawnCard.deckDef) return;
+      if (currentDrawnCard.mobileCategoryKey) {
+        drawRandomCardFromCategory(currentDrawnCard.mobileCategoryKey);
+        return;
+      }
+      drawCardFromDeck(currentDrawnCard.deckDef.code);
+    }
+
+    /**
+     * 7. MODAIS, LIVRO DE GABARITOS E NOTIFICAÇÕES
+     */
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+      }
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+      }
+    }
+
+    function handleBackdropClick(event, modalId) {
+      if (event.target && event.target.id === modalId) {
+        closeModal(modalId);
+      }
+    }
+
+    function openSearchModal() {
+      renderSearchCardsList();
+      openModal('modalSearchCards');
+      setTimeout(() => {
+        const input = document.getElementById('inputCardSearch');
+        if (input) input.focus();
+      }, 60);
+    }
+
+    function renderSearchCardsList() {
+      const term = (document.getElementById('inputCardSearch').value || '').toLowerCase().trim();
+      const deckFilter = document.getElementById('selectCardDeckFilter').value;
+      const allCards = [...OFFICIAL_CARDS_DB, ...CHALLENGE_CARDS_DB];
+
+      const filtered = allCards.filter(c => {
+        if (deckFilter !== 'ALL' && c.deck !== deckFilter) {
+          return false;
+        }
+        if (!term) return true;
+        return c.id.toLowerCase().includes(term) ||
+               c.area.toLowerCase().includes(term) ||
+               c.q.toLowerCase().includes(term) ||
+               (c.exp && c.exp.toLowerCase().includes(term));
+      });
+
+      const container = document.getElementById('searchCardsResults');
+      if (!container) return;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">Nenhuma carta encontrada para "${term}".</div>`;
+        return;
+      }
+
+      const letters = ['A', 'B', 'C', 'D'];
+      container.innerHTML = filtered.slice(0, 80).map(c => {
+        const subjectStyle = SUBJECT_COLORS[c.area];
+        const deckDef = DECK_DEFINITIONS.find(d => d.code === c.deck);
+        const tagBg = subjectStyle ? subjectStyle.color : (deckDef ? deckDef.color : '#16224A');
+        const tagText = (subjectStyle ? subjectStyle.textDark : deckDef && deckDef.textDark) ? '#0F172A' : '#FFFFFF';
+        const deckBg = deckDef ? deckDef.color : '#16224A';
+        const deckText = (deckDef && deckDef.textDark) ? '#0F172A' : '#FFFFFF';
+
+        return `
+        <div class="p-3.5 rounded-2xl border border-slate-200 bg-white space-y-1.5">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span style="background-color: ${deckBg}; color: ${deckText};" class="px-2 py-0.5 rounded font-mono text-xs font-extrabold">${c.id}</span>
+              <span style="background-color: ${tagBg}; color: ${tagText};" class="px-2 py-0.5 rounded text-xs font-bold">${c.area}</span>
+            </div>
+            ${c.ans ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-extrabold">Gabarito: ${c.ans}</span>` : ''}
+          </div>
+          <p class="text-xs sm:text-sm font-bold text-slate-900">${c.q}</p>
+          ${c.opts ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-600 pt-1">
+            ${c.opts.map((o, idx) => `<div class="${letters[idx] === c.ans ? 'font-extrabold text-emerald-700' : ''}">${letters[idx]}) ${o}</div>`).join('')}
+          </div>` : ''}
+          <div class="text-[11px] text-slate-500 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+            <strong>Explicação:</strong> ${c.exp}
+          </div>
+        </div>
+      `;
+      }).join('') + (filtered.length > 80 ? `<div class="text-center text-xs text-slate-500 py-2">Exibindo 80 de ${filtered.length} resultados. Refine a busca acima.</div>` : '');
+    }
+
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const el = document.createElement('div');
+      const colors = {
+        info: 'bg-cabecao-navy text-white border-white/15',
+        success: 'bg-emerald-700 text-white border-emerald-400/30',
+        warn: 'bg-amber-600 text-white border-amber-300/30',
+        error: 'bg-red-700 text-white border-red-400/30',
+      };
+      el.className = `px-4 py-2.5 rounded-xl shadow-lg border text-xs font-bold flex items-center gap-2 transition-all duration-300 ${colors[type] || colors.info}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(8px)';
+        setTimeout(() => el.remove(), 300);
+      }, 2800);
+    }
+
+    // Fechar modais ativos com a tecla Escape
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        ['modalCardDraw', 'modalCompetencyDraw', 'modalSearchCards', 'modalConfirmReset'].forEach(closeModal);
+      }
+    });
+
+    // Inicializar aplicação
+    window.onload = function () {
+      if (new URLSearchParams(window.location.search).get('embedded') === 'app') {
+        const innerHeader = document.getElementById('mobileInnerHeader');
+        if (innerHeader) innerHeader.classList.add('hidden');
+      }
+      filterDeckTab(state.deckTab || 'ALL');
+    };
+  </script>
+</body>
+</html>

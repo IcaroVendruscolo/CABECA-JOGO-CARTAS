@@ -1,0 +1,6 @@
+{
+  "name": "Cabeção — Simulador de Baralho & Iframe",
+  "description": "Carrega automaticamente o simulador de baralho Cabeção a partir do Google Sites e gera o arquivo index.html pronto para integração via iframe.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
