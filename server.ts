@@ -108,7 +108,11 @@ async function startServer() {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Cache-Control', 'no-cache');
       res.removeHeader('X-Frame-Options');
-      res.status(200).send(payload.html);
+      const htmlForApiRoute = payload.html.replace(
+        /(["'(])\.\/assets\//g,
+        '$1/assets/',
+      );
+      res.status(200).send(htmlForApiRoute);
     } catch (error) {
       res.status(502).json({
         error: 'Não foi possível carregar o simulador de baralho.',

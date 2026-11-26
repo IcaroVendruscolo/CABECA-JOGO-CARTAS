@@ -17,12 +17,12 @@ import {
 const GOOGLE_SITES_URL =
   'https://sites.google.com/view/sorteadordecartascabeo/full-page-embed';
 
-const LOGO_PURPLE = '/assets/aistudio/LOGO_HORIZONTAL_CABECAO_0eff6b30.png';
+const LOGO_PURPLE = './assets/aistudio/LOGO_HORIZONTAL_CABECAO_0eff6b30.png';
 const LOGO_WHITE =
-  '/assets/aistudio/LOGO_HORIZONTAL_CABECAO_BRANCA_8ea4bcf1.png';
+  './assets/aistudio/LOGO_HORIZONTAL_CABECAO_BRANCA_8ea4bcf1.png';
 const LOGO_SALMON =
-  '/assets/aistudio/LOGO_HORIZONTAL_CABECAO_SALMAO_0723a14b.png';
-const LOGO_ICON = '/assets/aistudio/LOGO_ICON_758fc1db.png';
+  './assets/aistudio/LOGO_HORIZONTAL_CABECAO_SALMAO_0723a14b.png';
+const LOGO_ICON = './assets/aistudio/LOGO_ICON_758fc1db.png';
 
 type ActiveTab = 'simulator' | 'code';
 
@@ -56,9 +56,9 @@ export default function App() {
 
   const defaultEmbedUrl = useMemo(() => {
     if (typeof window === 'undefined') {
-      return '/api/embed-simulator';
+      return './simulador.html';
     }
-    return `${window.location.origin}/api/embed-simulator`;
+    return new URL('./simulador.html', window.location.href).href;
   }, []);
 
   const effectiveEmbedUrl = customEmbedUrl.trim() || defaultEmbedUrl;
@@ -69,14 +69,35 @@ export default function App() {
         ? '?refresh=1&includeHtml=1'
         : '?includeHtml=1';
       const response = await fetch(`/api/simulator-meta${query}`);
-      if (!response.ok) {
-        throw new Error(`Erro ${response.status} ao sincronizar com o servidor.`);
+      const contentType = response.headers.get('content-type') || '';
+      if (response.ok && contentType.includes('application/json')) {
+        const data: SimulatorMeta = await response.json();
+        setMeta(data);
+        if (data.html) {
+          setSimulatorHtml(data.html);
+        }
+        setIframeError(null);
+        return;
       }
-      const data: SimulatorMeta = await response.json();
-      setMeta(data);
-      if (data.html) {
-        setSimulatorHtml(data.html);
+    } catch {
+      // Fall through to static simulador.html loading (e.g. GitHub Pages)
+    }
+
+    try {
+      const staticRes = await fetch('./simulador.html');
+      if (!staticRes.ok) {
+        throw new Error(`Erro ${staticRes.status} ao carregar simulador.html.`);
       }
+      const html = await staticRes.text();
+      setSimulatorHtml(html);
+      setMeta({
+        sourceUrl: GOOGLE_SITES_URL,
+        embedPath: './simulador.html',
+        staticPath: './simulador.html',
+        syncedAt: new Date().toISOString(),
+        mode: 'custom',
+        byteLength: new TextEncoder().encode(html).length,
+      });
       setIframeError(null);
     } catch (error) {
       setIframeError(
@@ -136,8 +157,8 @@ export default function App() {
 
   const iframeSrc =
     reloadNonce === 0
-      ? '/api/embed-simulator?embedded=app'
-      : `/api/embed-simulator?embedded=app&refresh=1&v=${reloadNonce}`;
+      ? './simulador.html?embedded=app'
+      : `./simulador.html?embedded=app&v=${reloadNonce}`;
 
   const handleReload = () => {
     setIframeLoaded(false);

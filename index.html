@@ -9,13 +9,153 @@
     <meta property="og:description" content="Carrega automaticamente o simulador de baralho Cabeção a partir do Google Sites e gera o arquivo index.html pronto para integração via iframe." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" type="image/png" href="/assets/aistudio/LOGO_ICON_758fc1db.png" />
+    <link rel="icon" type="image/png" href="./assets/aistudio/LOGO_ICON_758fc1db.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=JetBrains+Mono:wght@400;500&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      .ghp-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background-color: #f1f5f9;
+        color: #0f172a;
+        margin: 0;
+        font-family: "Poppins", ui-sans-serif, system-ui, sans-serif;
+      }
+      .ghp-header {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        height: 60px;
+        background-color: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        box-sizing: border-box;
+      }
+      .ghp-logo-wrap {
+        position: relative;
+        width: 112px;
+        height: 46px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .ghp-logo-img {
+        width: 78px;
+        max-width: none;
+        height: auto;
+        transform: rotate(90deg);
+        user-select: none;
+      }
+      .ghp-cartas {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #16224a;
+        flex-shrink: 0;
+      }
+      .ghp-cartas-label {
+        font-family: "Bubblegum Sans", cursive, sans-serif;
+        font-weight: 400;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: 0.025em;
+        color: #16224a;
+        white-space: nowrap;
+      }
+      .ghp-frame {
+        display: block;
+        width: 100%;
+        height: calc(100dvh - 60px);
+        border: 0;
+        background-color: #f1f5f9;
+      }
+    </style>
   </head>
-  <body class="bg-slate-100 text-slate-900 antialiased">
+  <body class="bg-slate-100 text-slate-900 antialiased" style="margin: 0;">
     <div id="root"></div>
+    <script>
+      (function () {
+        var booted = false;
+
+        function renderStaticCabecao(basePath) {
+          var root = document.getElementById('root');
+          if (!root || window.__CABECAO_APP_MOUNTED__ || root.childNodes.length > 0) {
+            return;
+          }
+
+          var iconLink = document.querySelector('link[rel="icon"]');
+          if (iconLink) {
+            iconLink.setAttribute(
+              'href',
+              basePath + 'assets/aistudio/LOGO_ICON_758fc1db.png'
+            );
+          }
+
+          var logoUrl =
+            basePath + 'assets/aistudio/LOGO_HORIZONTAL_CABECAO_0eff6b30.png';
+          var simulatorUrl = basePath + 'simulador.html?embedded=app';
+
+          root.innerHTML =
+            '<div class="ghp-shell">' +
+              '<header class="ghp-header">' +
+                '<div class="ghp-logo-wrap" aria-label="CABEÇÃO">' +
+                  '<img src="' + logoUrl + '" alt="CABEÇÃO" referrerpolicy="no-referrer" class="ghp-logo-img" />' +
+                '</div>' +
+                '<div class="ghp-cartas">' +
+                  '<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#723977" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                    '<rect x="4" y="7" width="12" height="16" rx="2.5" transform="rotate(-10 4 7)" fill="#FFFFFF"></rect>' +
+                    '<rect x="12" y="5" width="12" height="16" rx="2.5" transform="rotate(8 12 5)" fill="#FFFFFF"></rect>' +
+                  '</svg>' +
+                  '<span class="ghp-cartas-label">CARTAS</span>' +
+                '</div>' +
+              '</header>' +
+              '<iframe class="ghp-frame" src="' + simulatorUrl + '" title="CABEÇÃO — Sorteador de Cartas e Simulador de Baralho" allow="clipboard-write; fullscreen" allowfullscreen></iframe>' +
+            '</div>';
+        }
+
+        function bootStaticFallback() {
+          if (booted || window.__CABECAO_APP_MOUNTED__) return;
+          var root = document.getElementById('root');
+          if (!root || root.childNodes.length > 0) return;
+          booted = true;
+
+          fetch('./simulador.html', { method: 'HEAD' })
+            .then(function (res) {
+              renderStaticCabecao(res.ok ? './' : './public/');
+            })
+            .catch(function () {
+              renderStaticCabecao('./public/');
+            });
+        }
+
+        window.addEventListener(
+          'error',
+          function (event) {
+            var target = event && event.target;
+            if (
+              target &&
+              target.tagName === 'SCRIPT' &&
+              /main\.tsx/.test(target.getAttribute('src') || '')
+            ) {
+              bootStaticFallback();
+            }
+          },
+          true
+        );
+
+        window.addEventListener('DOMContentLoaded', function () {
+          setTimeout(bootStaticFallback, 900);
+        });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
